@@ -1,0 +1,62 @@
+version: "3.7"
+services:
+  web:
+    image: cosy-app
+    build: .
+    restart: always
+    depends_on:
+      - dlt
+    networks:
+      - internal
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./src:/usr/app/src
+      - TrustSECO:/root/.gnupg
+
+  dlt:
+    image: dlt-app
+    build: https://github.com/fides-uu/trustseco-dlt.git#development
+    restart: always
+    networks:
+      - internal
+    ports:
+      - "8000:8000"
+      - "8080:8080"
+      - "8001:8001"
+    volumes:
+      - TrustSECO:/root/.lisk
+      - TrustSECO:/root/.gnupg
+    environment:
+      HOSTNAME: 'localhost'
+      RESET_ON_VERSION_MISMATCH: 1
+
+  spider:
+    image: spider-app
+    build: https://github.com/fides-uu/trustseco-spider.git#main
+    restart: always
+    stop_signal: SIGINT
+    networks:
+      - internal
+    volumes:
+      - TrustSECO:/app/clamav/sockets
+
+  scanner:
+    container_name: ClamAV-daemon
+    image: 'clamav/clamav:0.104'
+    restart: always
+    environment:
+      - CLAMAV_NO_MILTERD=true
+    depends_on:
+      - spider
+    networks:
+      - internal
+    volumes:
+      - TrustSECO:/run/clamav
+      - ./clamav/configs:/etc/clamav
+
+volumes:
+  TrustSECO:
+
+networks:
+  internal:

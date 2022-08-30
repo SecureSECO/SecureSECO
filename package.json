@@ -1,0 +1,49 @@
+{
+  "name": "trustseco-cosy",
+  "version": "1.0.0",
+  "description": "The coordination system for the TrustSECO project.",
+  "main": "dist/app.js",
+  "scripts": {
+    "start": "tsc && node dist/app.js",
+    "dev": "tsc-watch --noClear -p tsconfig.json --onSuccess \"node ./dist/app.js\"",
+    "lint": "eslint . --ext .ts",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/Fides-UU/TrustSECO-CoSy.git"
+  },
+  "author": "Fides",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Fides-UU/TrustSECO-CoSy/issues"
+  },
+  "homepage": "https://github.com/Fides-UU/TrustSECO-CoSy#readme",
+  "devDependencies": {
+    "@types/koa-router": "^7.4.4",
+    "@typescript-eslint/eslint-plugin": "^5.16.0",
+    "@typescript-eslint/parser": "^5.16.0",
+    "eslint": "^8.11.0",
+    "eslint-config-airbnb-base": "^15.0.0",
+    "eslint-config-typescript": "^3.0.0",
+    "eslint-plugin-import": "^2.25.4",
+    "nodemon": "^2.0.15",
+    "tsc-watch": "^5.0.3",
+    "typescript": "^4.7.2"
+  },
+  "dependencies": {
+    "@koa/cors": "^3.3.0",
+    "@liskhq/lisk-api-client": "^5.1.6",
+    "@liskhq/lisk-client": "^5.2.2",
+    "axios": "^0.26.1",
+    "dotenv": "^16.0.0",
+    "heap-js": "^2.2.0",
+    "koa": "^2.13.4",
+    "koa-body": "^5.0.0",
+    "koa-router": "^10.1.1",
+    "koa-send": "^5.0.1",
+    "koa-static": "^5.0.0",
+    "koa-websocket": "^7.0.0",
+    "ws": "^8.5.0"
+  }
+}
