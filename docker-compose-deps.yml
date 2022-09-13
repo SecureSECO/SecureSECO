@@ -1,0 +1,11 @@
+# pull- and build- only "services" used by others
+version: "3.7"
+services:
+  secureseco-portal:
+    image: ${SECURESECO_PORTAL_IMAGE}
+    build: ${SECURESECO_PORTAL_GIT_REPO}#${SECURESECO_PORTAL_GIT_BRANCH}
+
+  searchseco-controller:
+    image: ${SEARCHSECO_CONTROLLER_IMAGE}
+    # NOTE: build would fail since its dockerfile needs git submodule init/update
+    # build: ${SEARCHSECO_CONTROLLER_GIT_REPO}#${SEARCHSECO_CONTROLLER_GIT_BRANCH}

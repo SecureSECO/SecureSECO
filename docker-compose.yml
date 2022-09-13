@@ -2,7 +2,10 @@ version: "3.7"
 services:
   web:
     image: cosy-app
-    build: .
+    build:
+      context: .
+      args:
+        - SECURESECO_PORTAL_IMAGE
     restart: always
     depends_on:
       - dlt
@@ -12,11 +15,12 @@ services:
       - "3000:3000"
     volumes:
       - ./src:/usr/app/src
+      - /var/run/docker.sock:/var/run/docker.sock
       - TrustSECO:/root/.gnupg
 
   dlt:
     image: dlt-app
-    build: https://github.com/fides-uu/trustseco-dlt.git#development
+    build: ${TRUSTSECO_DLT_GIT_REPO}#${TRUSTSECO_DLT_GIT_BRANCH}
     restart: always
     networks:
       - internal
@@ -28,12 +32,12 @@ services:
       - TrustSECO:/root/.lisk
       - TrustSECO:/root/.gnupg
     environment:
-      HOSTNAME: 'localhost'
-      RESET_ON_VERSION_MISMATCH: 1
+      - HOSTNAME='localhost'
+      - RESET_ON_VERSION_MISMATCH=1
 
   spider:
     image: spider-app
-    build: https://github.com/fides-uu/trustseco-spider.git#main
+    build: ${TRUSTSECO_SPIDER_GIT_REPO}#${TRUSTSECO_SPIDER_GIT_BRANCH}
     restart: always
     stop_signal: SIGINT
     networks:
