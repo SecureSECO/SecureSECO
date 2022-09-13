@@ -70,5 +70,29 @@ export interface QueueTransaction {
     transaction: Record<string, unknown>
 }
 
+export interface Miner {
+    id: string, // docker container id
+    name: string, // docker container name
+    config: {
+        github_token?: string,
+        worker_name?: string,
+        cpus?: number,
+    },
+    // State from docker inspect container
+    state: {
+        Status: string,
+        Running: boolean,
+        Paused: boolean,
+        Restarting: boolean,
+        OOMKilled: boolean,
+        Dead: boolean,
+        Pid: number,
+        ExitCode: number,
+        Error: string,
+        StartedAt: string,
+        FinishedAt: string,
+    },
+}
+
 /* This program has been developed by students from the bachelor Computer Science at Utrecht University within the Software Project course.
 © Copyright Utrecht University (Department of Information and Computing Sciences) */
