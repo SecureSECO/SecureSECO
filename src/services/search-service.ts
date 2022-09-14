@@ -29,7 +29,9 @@ export async function getMiner(id: string): Promise<Miner> {
         config: {
             github_token: env.github_token,
             worker_name: env.worker_name,
-            cpus: env.cpus,
+            // API_IPS: env.API_IPS,
+            // verbose: env.verbose,
+            // cpu: env.cpu,
         },
         state: info.State,
     };
@@ -66,18 +68,29 @@ export async function getMetrics() {
 }
 
 export const createMiner = async (params: Miner['config']) => {
-    // TODO params.cpus
-    // TODO params.verbose
-    const { github_token, worker_name } = params;
+    const envDefault = {
+        github_token: '',
+        worker_name: '',
+        // API_IPS: process.env.API_IPS,
+        // verbose: 4,
+        // cpu: 2,
+    };
+
+    // build array of docker container environment variables for the command
+    const env = [];
+    for (const e of Object.keys(envDefault)) {
+        const val = params[e] || envDefault[e];
+        env.push('-e');
+        env.push(`${e}=${val}`);
+    }
 
     try {
+        const cpus = 2;
         await execDocker([
             'run',
-            '-e',
-            `github_token=${github_token}`,
-            '--cpus=2',
-            '-e',
-            `worker_name=${worker_name}`,
+            '--detach',
+            `--cpus=${cpus}`,
+            ...env,
             process.env.SEARCHSECO_CONTROLLER_IMAGE,
         ]);
         return {

@@ -76,7 +76,9 @@ export interface Miner {
     config: {
         github_token?: string,
         worker_name?: string,
-        cpus?: number,
+        // API_IPS?: string;
+        // verbose?: string;
+        // cpu?: string;
     },
     // State from docker inspect container
     state: {
