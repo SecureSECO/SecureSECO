@@ -14,11 +14,10 @@ const router: Router = new Router({
 
 router.post('/add-miner', async (ctx) => {
     const { github_token, worker_name } = ctx.request.body;
-    await createMiner({
+    ctx.response.body = await createMiner({
         github_token,
         worker_name,
     });
-    ctx.response.body = 'Added miner.';
 });
 
 router.get('/miners', async (ctx) => {

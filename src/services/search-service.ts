@@ -70,18 +70,26 @@ export const createMiner = async (params: Miner['config']) => {
     // TODO params.verbose
     const { github_token, worker_name } = params;
 
-    const { stdout, stderr } = await execDocker([
-        'run',
-        '-e',
-        `github_token=${github_token}`,
-        '--cpus=2',
-        '-e',
-        `worker_name=${worker_name}`,
-        process.env.SEARCHSECO_CONTROLLER_IMAGE,
-    ]);
-
-    console.log('createMiner: stdout', stdout.trim());
-    console.log('createMiner: stderr', stderr.trim());
+    try {
+        await execDocker([
+            'run',
+            '-e',
+            `github_token=${github_token}`,
+            '--cpus=2',
+            '-e',
+            `worker_name=${worker_name}`,
+            process.env.SEARCHSECO_CONTROLLER_IMAGE,
+        ]);
+        return {
+            success: true,
+            message: 'Added Miner.',
+        };
+    } catch (e) {
+        return {
+            success: false,
+            message: e.message,
+        };
+    }
 };
 
 export const changeMinerState = async (id: string, action: string) => {
