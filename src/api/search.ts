@@ -6,6 +6,7 @@ import {
     getMetrics,
     getMiner,
     getMiners,
+    rerunMiner,
 } from '../services/search-service';
 
 const router: Router = new Router({
@@ -28,6 +29,11 @@ router.get('/miner/:id', async (ctx) => {
 router.get('/miner/:id/remove', async (ctx) => {
     const { id } = ctx.params;
     ctx.response.body = await changeMinerState(id, 'remove');
+});
+
+router.get('/miner/:id/rerun', async (ctx) => {
+    const { id } = ctx.params;
+    ctx.response.body = await rerunMiner(id);
 });
 
 router.get('/miner/:id/restart', async (ctx) => {

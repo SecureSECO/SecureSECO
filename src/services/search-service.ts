@@ -67,7 +67,7 @@ export async function getMetrics() {
     };
 }
 
-export const createMiner = async (params: Miner['config']) => {
+export const createMiner = async (params: Miner['config'], name = '') => {
     const envDefault = {
         github_token: '',
         worker_name: '',
@@ -84,12 +84,16 @@ export const createMiner = async (params: Miner['config']) => {
         env.push(`${e}=${val}`);
     }
 
+    const opt = [];
+    if (name !== '') opt.push(`--name=${name}`);
+
     try {
         const cpus = 2;
         await execDocker([
             'run',
             '--detach',
             `--cpus=${cpus}`,
+            ...opt,
             ...env,
             process.env.SEARCHSECO_CONTROLLER_IMAGE,
         ]);
@@ -103,6 +107,20 @@ export const createMiner = async (params: Miner['config']) => {
             message: e.message,
         };
     }
+};
+
+// equivalent to docker stop --> remove --> run with previous container's config
+export const rerunMiner = async (id: string) => {
+    // get the info of the running container
+    const miner = await getMiner(id);
+
+    // stop and remove the miner
+    await execDocker(['stop', id]);
+    await execDocker(['rm', id]);
+
+    // re-run the miner
+    const result = await createMiner(miner.config, miner.name);
+    return result;
 };
 
 export const changeMinerState = async (id: string, action: string) => {
