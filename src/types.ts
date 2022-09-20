@@ -76,7 +76,6 @@ export interface Miner {
     config: {
         github_token?: string,
         worker_name?: string,
-        // API_IPS?: string;
         // verbose?: string;
         // cpu?: string;
     },

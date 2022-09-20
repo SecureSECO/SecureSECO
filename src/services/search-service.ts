@@ -29,7 +29,6 @@ export async function getMiner(id: string): Promise<Miner> {
         config: {
             github_token: env.github_token,
             worker_name: env.worker_name,
-            // API_IPS: env.API_IPS,
             // verbose: env.verbose,
             // cpu: env.cpu,
         },
@@ -86,7 +85,6 @@ export const createMiner = async (params: Miner['config'], name = '') => {
     const envDefault = {
         github_token: '',
         worker_name: '',
-        // API_IPS: process.env.API_IPS,
         // verbose: 4,
         // cpu: 2,
     };
@@ -99,6 +97,7 @@ export const createMiner = async (params: Miner['config'], name = '') => {
         env.push(`${e}=${val}`);
     }
 
+    // build array of docker container options
     const opt = [];
     if (name !== '') opt.push(`--name=${name}`);
 
@@ -152,13 +151,8 @@ export const changeMinerState = async (id: string, action: string) => {
             break;
 
         default:
-            console.log('error! unknown action', action);
             return false;
     }
     const { stdout, stderr } = await execDocker([cmd, id]);
-    console.log(`changeMinerState(${id}, ${action})`);
-    if (stderr) {
-        console.log(`changeMinerState(${id}, ${action}): ERROR`, stderr.trim());
-    }
     return { stdout, stderr };
 };
