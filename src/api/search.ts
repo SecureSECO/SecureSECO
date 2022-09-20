@@ -5,6 +5,7 @@ import {
     createMiner,
     getMetrics,
     getMiner,
+    getMinerLogs,
     getMiners,
     rerunMiner,
 } from '../services/search-service';
@@ -49,6 +50,11 @@ router.get('/miner/:id/start', async (ctx) => {
 router.get('/miner/:id/stop', async (ctx) => {
     const { id } = ctx.params;
     ctx.response.body = await changeMinerState(id, 'stop');
+});
+
+router.get('/miner/:id/logs', async (ctx) => {
+    const { id } = ctx.params;
+    ctx.response.body = await getMinerLogs(id);
 });
 
 router.get('/metrics', async (ctx) => {

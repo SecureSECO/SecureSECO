@@ -59,6 +59,21 @@ export async function getMiners(): Promise<Miner[]> {
     return miners;
 }
 
+export async function getMinerLogs(id: string): Promise<string[]> {
+    const logs = [];
+    const lines = 5 * 10;
+
+    const { stderr } = await execDocker(['logs', '--tail', `${lines}`, id]);
+
+    for (const log of stderr.split('\n')) {
+        if (log.length > 0) {
+            logs.push(log);
+        }
+    }
+
+    return logs;
+}
+
 export async function getMetrics() {
     return {
         methods_added_4hrs: [],
