@@ -60,6 +60,7 @@ async function consumeFromHeap(client) {
         await runTransaction(transaction);
     } catch (e) {
         console.log('Encountered error, if you believe this was a mistake, please run task again.');
+        console.error(e, e.stack);
     }
 }
 
