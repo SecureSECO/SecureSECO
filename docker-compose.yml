@@ -32,7 +32,7 @@ services:
       - TrustSECO:/root/.lisk
       - TrustSECO:/root/.gnupg
     environment:
-      - HOSTNAME='localhost'
+      - HOSTNAME=localhost
       - RESET_ON_VERSION_MISMATCH=1
 
   spider:
