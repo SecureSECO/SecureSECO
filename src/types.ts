@@ -50,6 +50,7 @@ export interface SpiderJob {
     so_data_points?: string[],
     lib_data_points?: string[],
     gh_data_points?: string[],
+    virus_scanning?: string[],
 }
 
 export interface Tokens {

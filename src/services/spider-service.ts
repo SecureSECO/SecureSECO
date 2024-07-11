@@ -51,6 +51,9 @@ export async function runJob(job: RandomJobResult): Promise<unknown> {
         case 'gh':
             spiderJob.gh_data_points = [job.fact];
             break;
+        case 'vs':
+            spiderJob.virus_scanning = [job.fact];
+            break;
         default:
             break;
     }
