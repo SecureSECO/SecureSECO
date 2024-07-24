@@ -4,7 +4,7 @@ import Emitter from 'node:events';
 import {
     Job, RandomJobResult, SpiderJob, Tokens,
 } from '../types';
-import { encodeFact, getModule, getRandomJob } from './dlt-service';
+import { encodeFact, getModule, getRandomJob, getAllUnfinishedJobs, getJobDetails } from './dlt-service';
 import { getKeys, signMessage } from '../keys';
 import { addToHeap } from './queue-service';
 
@@ -13,6 +13,7 @@ const emitter = new Emitter();
 const spider = axios.create({
     baseURL: SPIDER_ENDPOINT,
 });
+const retryCount = 2; // How often a job should be retried before giving up
 
 export async function setTokens(tokens: Tokens): Promise<string> {
     const { data } = await spider.post('set_tokens', tokens);
@@ -63,37 +64,52 @@ let running = false;
 
 export async function startSpider() {
     running = true;
-    while (running) {
-        let job;
+    let jobCounts = {}; // the amount of times a job has failed
 
-        try {
-            job = await getRandomJob();
-            emitter.emit('info', `Got Spider job for package ${job.packageName} with fact ${job.fact}`);
-        } catch (e) {
-            console.log(e);
+    while (running) {
+        let jobs = await getAllUnfinishedJobs();
+
+        if (jobs.length === 0)
+        {
             emitter.emit('info', 'No Spider job available! Sleeping for 30 sec.');
             await sleep(30 * 1000);
             continue;
         }
 
-        emitter.emit('info', `Got Spider job for package ${job.packageName} with fact ${job.fact}`);
+        let filteredJobs = jobs.filter(job => !(job.jobID in jobCounts && jobCounts[job.jobID] >= retryCount))
+
+        if (filteredJobs.length === 0)
+        {
+            emitter.emit('info', 'All available spider jobs have been tried more than retry count already! Sleeping for 30 sec.');
+            await sleep(30 * 1000);
+            continue;
+        }
+
+        let job = await getJobDetails(filteredJobs[Math.floor(Math.random() * filteredJobs.length)]);
+
+        emitter.emit('info', `Got Spider job for package ${job.package} with fact ${job.fact}`);
 
         const spiderResult = await runJob(job);
+
 
         const dataPoint = spiderResult[job.fact];
 
         if (dataPoint === undefined || dataPoint === null) {
             emitter.emit('info', `The spider returned null for ${job.fact}! Finding a new job!`);
+            if (!(job.jobID in jobCounts))
+                jobCounts[job.jobID] = 1
+            else
+                jobCounts[job.jobID] += 1
             await sleep(5 * 1000);
             continue;
         }
 
-        emitter.emit('info', `The ${job.fact} for ${job.packageName} is ${dataPoint}`);
+        emitter.emit('info', `The ${job.fact} for ${job.package} is ${dataPoint}`);
 
         const keys = await getKeys();
 
         const data = {
-            jobID: job.jobID,
+            jobID: Number(job.jobID),
             factData: JSON.stringify(dataPoint),
         };
 
