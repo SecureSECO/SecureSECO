@@ -94,15 +94,15 @@ export async function startSpider() {
 
         const spiderResult = await runJob(job);
 
+        if (!(job.jobID in jobCounts))
+            jobCounts[job.jobID] = 1
+        else
+            jobCounts[job.jobID] += 1
 
         const dataPoint = spiderResult[job.fact];
 
         if (dataPoint === undefined || dataPoint === null) {
             emitter.emit('info', `The spider returned null for ${job.fact}! Finding a new job!`);
-            if (!(job.jobID in jobCounts))
-                jobCounts[job.jobID] = 1
-            else
-                jobCounts[job.jobID] += 1
             await sleep(5 * 1000);
             continue;
         }
