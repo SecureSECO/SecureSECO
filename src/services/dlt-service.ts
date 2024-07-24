@@ -3,7 +3,7 @@ import { RegisteredModule } from '@liskhq/lisk-api-client/dist-node/types';
 import { APIClient } from '@liskhq/lisk-api-client';
 import fs from 'fs';
 import {
-    CodaJob, Job, RandomJobResult,
+    CodaJob, Job, RandomJobResult, PackageData
 } from '../types';
 import 'dotenv/config';
 import { getKeys } from '../keys';
@@ -59,7 +59,7 @@ export async function getGitHubLink() {
     return storage.github_link;
 }
 
-export async function getJobs(): Promise<Job[]> {
+export async function getJobs(): Promise<CodaJob[]> {
     const client = await getClient();
     return client.invoke('coda:getJobs');
 }
@@ -73,7 +73,39 @@ export async function getRandomJob(): Promise<RandomJobResult> {
     });
 }
 
-export async function getTrustFacts(packageName: string): Promise<unknown> {
+export async function getAllUnfinishedJobs(): Promise<CodaJob[]> {
+    const { id } = await getKeys();
+    let allJobs = await getJobs();
+    let unfinished = await Promise.all(allJobs.map(async job => {
+        let trustFacts = (await getTrustFacts(job.package)).facts;
+        if (trustFacts === undefined) return true;
+        return !trustFacts.some(fact => fact.account.uid === id && fact.jobID === job.jobID);
+    }))
+    let unfinishedJobs = allJobs.filter((_, i) => unfinished[i]);
+    return unfinishedJobs;
+}
+
+export async function getJobDetails(job: CodaJob): Promise<RandomJobResult> {
+    let packageData = await getPackageData(job.package);
+
+    return {
+        package: job.package,
+        version: job.version,
+        fact: job.fact,
+        date: job.date,
+        jobID: job.jobID.toString(),
+        bounty: job.bounty.toString(),
+        account: {
+            uid: job.account.uid,
+        },
+        packageName: packageData.packageName,
+        packagePlatform: packageData.packagePlatform,
+        packageOwner: packageData.packageOwner,
+        packageReleases: packageData.packageReleases,
+    }
+}
+
+export async function getTrustFacts(packageName: string): Promise<any> {
     const client = await getClient();
     return client.invoke('trustfacts:getPackageFacts', {
         packageName,
@@ -84,7 +116,7 @@ export function getModule(name: string) {
     return registeredTransactions[name];
 }
 
-export async function getPackageData(packageName): Promise<string> {
+export async function getPackageData(packageName): Promise<PackageData> {
     const client = await getClient();
     return client.invoke('packagedata:getPackageInfo', {
         packageName,
