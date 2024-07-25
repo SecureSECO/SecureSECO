@@ -53,23 +53,14 @@ export default async function addAllJobs(packageData: PackageData) {
                 bounty: BigInt(bounty),
             };
 
-            const encoded = await encodeJob(data);
-
-            const keys = await getKeys();
-
-            const signature = await signMessage(encoded, keys.id);
-
-            const job = {
-                data,
-                signature,
-            };
+            const job = await encodeAndSign(data);
 
             const module = getModule('coda:AddJob');
             const transaction = {
                 moduleID: module.moduleID,
                 assetID: module.assetID,
                 fee: BigInt(10000000),
-                asset: job as unknown as Record<string, unknown>,
+                asset: job,
             };
 
             addToHeap({
@@ -82,5 +73,15 @@ export default async function addAllJobs(packageData: PackageData) {
     }
 }
 
+export async function encodeAndSign(data: CodaJob): Promise<Record<string, any>>
+{
+    const encoded = await encodeJob(data);
+    const keys = await getKeys();
+    const signature = await signMessage(encoded, keys.id);
+    return {
+        data,
+        signature,
+    };
+}
 /* This program has been developed by students from the bachelor Computer Science at Utrecht University within the Software Project course.
 © Copyright Utrecht University (Department of Information and Computing Sciences) */
