@@ -3,8 +3,10 @@ import Emitter from 'node:events';
 import { QueueTransaction } from '../types';
 import {
     getAccount,
-    getClient, getMinFee, getPassphrase, runTransaction,
+    getClient, getMinFee, getPassphrase, runTransaction, getMinimumBounty
 } from './dlt-service';
+import { encodeAndSign } from './add-job-service'
+import {CodaJob} from '../types'
 
 const heap = new Heap<QueueTransaction>(comparator);
 const emitter = new Emitter();
@@ -44,14 +46,23 @@ async function consumeFromHeap(client) {
     console.log(`Running transaction: ${queueTransaction.name}`);
 
     try {
-        // @ts-ignore
-        const bounty = queueTransaction.transaction.asset?.bounty;
+        const data = queueTransaction.transaction.asset.data;
+        if (data)
+            var bounty = (data as CodaJob).bounty;
         const { slingers } = await getAccount();
+        const minimumBounty = BigInt(await getMinimumBounty());
 
         if (bounty > slingers) {
             console.log('Not enough tokens to run this transaction, skipping...');
             await consumeFromHeap(client);
             return;
+        }
+
+        if (bounty < minimumBounty){
+            console.log('Bounty to low, setting value to minimumBounty');
+            let data = queueTransaction.transaction.asset.data;
+            (data as CodaJob).bounty = BigInt(minimumBounty);
+            queueTransaction.transaction.asset = await encodeAndSign(data as CodaJob);
         }
 
         const minFee = await getMinFee(queueTransaction.transaction);

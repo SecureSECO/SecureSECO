@@ -75,7 +75,14 @@ export interface QueueTransaction {
     name?: string,
     priority: number,
     created_at: number,
-    transaction: Record<string, unknown>
+    transaction: QTransaction
+}
+
+export interface QTransaction {
+    moduleID: number,
+    assetID: number,
+    fee: BigInt,
+    asset: Record<string, unknown>
 }
 
 export interface Miner {
