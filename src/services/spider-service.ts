@@ -10,6 +10,7 @@ import { addToHeap } from './queue-service';
 
 const SPIDER_ENDPOINT = 'http://spider:5000/';
 const emitter = new Emitter();
+emitter.on("info", (message) => console.log(`INFO:${message}`));
 const spider = axios.create({
     baseURL: SPIDER_ENDPOINT,
 });
