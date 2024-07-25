@@ -6,7 +6,7 @@ import {
 } from '../types';
 import { encodeFact, getModule, getRandomJob, getAllUnfinishedJobs, getJobDetails } from './dlt-service';
 import { getKeys, signMessage } from '../keys';
-import { addToHeap } from './queue-service';
+import { addToHeap, isJobInHeap } from './queue-service';
 
 const SPIDER_ENDPOINT = 'http://spider:5000/';
 const emitter = new Emitter();
@@ -80,7 +80,9 @@ export async function startSpider() {
             continue;
         }
 
-        let filteredJobs = jobs.filter(job => !(job.jobID in jobCounts && jobCounts[job.jobID] >= retryCount))
+        let filteredJobs = jobs.filter(job =>
+            !(job.jobID in jobCounts && jobCounts[job.jobID] >= retryCount) &&
+            !(isJobInHeap(job.jobID)))
 
         if (filteredJobs.length === 0)
         {
@@ -134,7 +136,7 @@ export async function startSpider() {
             asset: trustFact as unknown as Record<string, unknown>,
         };
 
-        emitter.emit('info', 'Finished job, adding to dlt queue!');
+        emitter.emit('info', `Finished job ${job.jobID}, adding to dlt queue!`);
 
         addToHeap({
             transaction,
