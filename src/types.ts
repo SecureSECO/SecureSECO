@@ -17,10 +17,17 @@ export interface PackageData {
 }
 
 export interface CodaJob {
-    package: string,
-    version: string,
-    fact: string,
-    bounty: bigint,
+    package: string;
+    version: string;
+    fact: string;
+    date?: string;
+    jobID?: number;
+    bounty: bigint;
+    account?: AccountId;
+}
+
+export interface AccountId {
+    uid: string;
 }
 
 export interface RandomJobResult {
