@@ -9,6 +9,7 @@ import { encodeAndSign } from './add-job-service'
 import {CodaJob} from '../types'
 
 const heap = new Heap<QueueTransaction>(comparator);
+var current_job: number | null = null;
 const emitter = new Emitter();
 
 export function addToHeap(transaction: QueueTransaction) {
@@ -38,6 +39,7 @@ export async function startQueue() {
 
 async function consumeFromHeap(client) {
     if (heap.isEmpty()) {
+        current_job = null;
         return;
     }
 
@@ -48,7 +50,10 @@ async function consumeFromHeap(client) {
     try {
         const data = queueTransaction.transaction.asset.data;
         if (data)
+        {
             var bounty = (data as CodaJob).bounty;
+            current_job = (data as CodaJob).jobID;
+        }
         const { slingers } = await getAccount();
         const minimumBounty = BigInt(await getMinimumBounty());
 
@@ -84,7 +89,7 @@ function comparator(a: QueueTransaction, b: QueueTransaction) {
 }
 
 export function isJobInHeap(jobID: number): boolean {
-    return heap.toArray().some((queueTransaction) => {
+    return jobID === current_job || heap.toArray().some((queueTransaction) => {
         const data = queueTransaction.transaction.asset.data;
         if (data){
             return (data as CodaJob).jobID === jobID;
