@@ -89,7 +89,7 @@ function comparator(a: QueueTransaction, b: QueueTransaction) {
 }
 
 export function isJobInHeap(jobID: number): boolean {
-    return jobID == current_job || heap.toArray().some((queueTransaction) => {
+    return jobID === current_job || heap.toArray().some((queueTransaction) => {
         const data = queueTransaction.transaction.asset.data;
         if (data){
             return (data as CodaJob).jobID === jobID;
