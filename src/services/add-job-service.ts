@@ -1,17 +1,15 @@
 /* eslint-disable no-await-in-loop */
-import { passphrase } from '@liskhq/lisk-client';
 import {
     encodeJob,
     getAllFacts,
-    getClient,
     getMinimumBounty,
     getModule,
-    getPackageData,
-    getPassphrase,
 } from './dlt-service';
 import { CodaJob, PackageData } from '../types';
 import { getKeys, signMessage } from '../keys';
 import { addToHeap } from './queue-service';
+import axios, { AxiosResponse } from 'axios';
+import semver from 'semver';
 
 // @ts-ignore
 // eslint-disable-next-line no-extend-native
@@ -73,8 +71,39 @@ export default async function addAllJobs(packageData: PackageData) {
     }
 }
 
-export async function encodeAndSign(data: CodaJob): Promise<Record<string, any>>
-{
+/** Get the most recent version of a package based on semantic versioning,
+ * excluding prerelease versions. */
+export async function getMostRecentVersion(
+    packageData: PackageData,
+): Promise<String> {
+    let resp: AxiosResponse;
+    try {
+        resp = await axios.get(
+            `https://api.github.com/repos/${packageData.packageOwner}/${packageData.packageName}/tags?per_page=100`,
+        );
+    } catch (error) {
+        console.log(error);
+        return ""
+    }
+    let data = resp.data as any[];
+    let parsed_versions: { raw_string: string; parsed: semver.SemVer }[] = [];
+    for (let i = 0; i < data.length; i++) {
+        let tag = data[i].name;
+        // filter out pep 440 (python versioning standard) prereleases
+        if (/(a|b|rc)\d+/.test(tag) || /\.dev\d+/.test(tag)) continue;
+        let version = semver.coerce(tag, { includePrerelease: true });
+        // filter out semantic version prereleases
+        if (version !== null && version.prerelease.length === 0) {
+            parsed_versions.push({ raw_string: tag, parsed: version });
+        }
+    }
+    parsed_versions.sort((x, y) => semver.rcompare(x.parsed, y.parsed));
+    return parsed_versions[0].raw_string;
+}
+
+export async function encodeAndSign(
+    data: CodaJob,
+): Promise<Record<string, any>> {
     const encoded = await encodeJob(data);
     const keys = await getKeys();
     const signature = await signMessage(encoded, keys.id);
