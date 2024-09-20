@@ -5,7 +5,7 @@ import {
     getGitHubLink, getJobs, getMetrics, getPackageData, getPackagesData, getTrustFacts, getTrustScore, storeGitHubLink,
 } from '../services/dlt-service';
 import { getKeys } from '../keys';
-import addAllJobs from '../services/add-job-service';
+import addAllJobs, {getMostRecentVersion} from '../services/add-job-service';
 
 const router: Router = new Router({
     prefix: '/dlt',
@@ -40,6 +40,18 @@ router.post('/add-job', async (ctx, next) => {
         packageReleases: [release],
     });
     ctx.response.body = 'Added jobs.';
+});
+
+router.post('/get-most-recent-version', async (ctx, next) => {
+    const {
+        name, owner, platform
+    } = ctx.request.body;
+    ctx.response.body = await getMostRecentVersion({
+        packageName: name,
+        packagePlatform: platform,
+        packageOwner: owner,
+        packageReleases: [],
+    });
 });
 
 router.post('/store-github-link', async (ctx, next) => {

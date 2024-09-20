@@ -18,7 +18,7 @@ router.get('/', (ctx, next) => {
 });
 
 router.get('/download', (ctx, next) => {
-    ctx.response.body = 'https://github.com/Fides-UU/TrustSECO-CoSy';
+    ctx.response.body = 'https://github.com/SecureSECO/SecureSECO';
 });
 
 router.get('/clear-queue', (ctx, next) => {
