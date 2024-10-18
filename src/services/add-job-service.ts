@@ -71,24 +71,32 @@ export default async function addAllJobs(packageData: PackageData) {
     }
 }
 
-/** Get the most recent version of a package based on semantic versioning,
+/** Get the most recent version of a github repo based on semantic versioning,
  * excluding prerelease versions. */
-export async function getMostRecentVersion(
+export async function getMostRecentVersionGithub(
     packageData: PackageData,
-): Promise<String> {
+): Promise<string> {
     let resp: AxiosResponse;
     try {
         resp = await axios.get(
             `https://api.github.com/repos/${packageData.packageOwner}/${packageData.packageName}/tags?per_page=100`,
         );
     } catch (error) {
-        console.log(error);
+        console.log("error while retreiving github tags");
+        console.log(`https://api.github.com/repos/${packageData.packageOwner}/${packageData.packageName}/tags?per_page=100`);
         return ""
     }
-    let data = resp.data as any[];
+    let data = resp.data;
+    let versions = data.map((x) => x.name)
+    return getMostRecentVersion(versions);
+}
+
+/** Get the most recent version of a package based on semantic versioning,
+ * excluding prerelease versions. */
+export function getMostRecentVersion(versions: string[]): string {
     let parsed_versions: { raw_string: string; parsed: semver.SemVer }[] = [];
-    for (let i = 0; i < data.length; i++) {
-        let tag = data[i].name;
+    for (let i = 0; i < versions.length; i++) {
+        let tag = versions[i];
         // filter out pep 440 (python versioning standard) prereleases
         if (/(a|b|rc)\d+/.test(tag) || /\.dev\d+/.test(tag)) continue;
         let version = semver.coerce(tag, { includePrerelease: true });
