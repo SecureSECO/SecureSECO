@@ -61,8 +61,8 @@ export interface SpiderJob {
 }
 
 export interface Tokens {
-    github_token?: string,
-    libraries_token?: string
+    github_token: string,
+    libraries_token: string
 }
 
 export interface Keys {

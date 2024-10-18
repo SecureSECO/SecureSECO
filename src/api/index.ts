@@ -2,6 +2,7 @@ import Router from 'koa-router';
 import dltRouter from './dlt';
 import spiderRouter from './spider';
 import searchRouter from './search';
+import crawlerRouter from './crawler';
 import { clearQueue } from '../services/queue-service';
 
 const router: Router = new Router({
@@ -11,6 +12,7 @@ const router: Router = new Router({
 router.use(dltRouter.routes());
 router.use(spiderRouter.routes());
 router.use(searchRouter.routes());
+router.use(crawlerRouter.routes());
 
 router.get('/', (ctx, next) => {
     const routes = router.stack.map((route) => route.path).sort().join('\n');

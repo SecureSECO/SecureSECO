@@ -14,7 +14,7 @@
     "url": "git+ssh://git@github.com/Fides-UU/TrustSECO-CoSy.git"
   },
   "author": "Fides",
-  "license": "ISC",
+  "license": "AGPL-3.0-or-later",
   "bugs": {
     "url": "https://github.com/Fides-UU/TrustSECO-CoSy/issues"
   },
