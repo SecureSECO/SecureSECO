@@ -9,10 +9,15 @@ import {
     getMiners,
     rerunMiner,
 } from '../services/search-service';
+import { linkBlockMiddleware } from './authentication'
 
 const router: Router = new Router({
     prefix: '/search',
 });
+
+// entire endpoint is blocked because sharing the miner doesn't make sense on
+// a public server
+router.use(linkBlockMiddleware);
 
 router.post('/add-miner', async (ctx) => {
     ctx.response.body = await createMiner({ ...ctx.request.body });

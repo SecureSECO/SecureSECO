@@ -6,10 +6,16 @@ import {
 } from '../services/dlt-service';
 import { getKeys } from '../keys';
 import addAllJobs, {getMostRecentVersionGithub} from '../services/add-job-service';
+import { linkBlockMiddleware } from './authentication'
 
 const router: Router = new Router({
     prefix: '/dlt',
 });
+
+// router for all paths that need verification
+const verification_router: Router = new Router({});
+
+verification_router.use(linkBlockMiddleware);
 
 router.get('/trust-facts/:packageName', async (ctx, next) => {
     const { packageName } = ctx.params;
@@ -20,7 +26,7 @@ router.get('/jobs', async (ctx, next) => {
     ctx.response.body = await getJobs();
 });
 
-router.get('/get-gpg-key', async (ctx, next) => {
+verification_router.get('/get-gpg-key', async (ctx, next) => {
     const { publicKey } = await getKeys();
     ctx.response.body = publicKey;
 });
@@ -29,7 +35,7 @@ router.get('/get-github-link', async (ctx, next) => {
     ctx.response.body = await getGitHubLink();
 });
 
-router.post('/add-job', async (ctx, next) => {
+verification_router.post('/add-job', async (ctx, next) => {
     const {
         name, owner, platform, release,
     } = ctx.request.body;
@@ -54,7 +60,7 @@ router.post('/get-most-recent-version', async (ctx, next) => {
     });
 });
 
-router.post('/store-github-link', async (ctx, next) => {
+verification_router.post('/store-github-link', async (ctx, next) => {
     await storeGitHubLink(ctx.request.body.data);
     const { data } = await axios.create().get(ctx.request.body.data);
     const storedOnGithub = !data.includes("This user hasn't uploaded any GPG keys.");
@@ -85,6 +91,8 @@ router.get('/package/:id/trust-score/:version', async (ctx, next) => {
 router.get('/account', async (ctx, next) => {
     ctx.response.body = await getAccount();
 });
+
+router.use(verification_router.routes())
 
 export default router;
 

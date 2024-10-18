@@ -4,10 +4,14 @@ import {
     isRunning, setTokens, startSpider, stopSpider,
 } from '../services/spider-service';
 import { getGitHubLink } from '../services/dlt-service';
+import { linkBlockMiddleware } from './authentication'
 
 const router: Router = new Router({
     prefix: '/spider',
 });
+
+// spider controls should not be available publically
+router.use(linkBlockMiddleware);
 
 router.post('/set-tokens', async (ctx, next) => {
     ctx.response.body = await setTokens({

@@ -2,18 +2,26 @@
  * packages and adds them to the system to be spidered.*/
 import Router from 'koa-router';
 import { runCrawler } from '../services/crawler-service';
+import { linkBlockMiddleware } from './authentication'
 
 const router: Router = new Router({
     prefix: '/crawler',
 });
 
-router.post('/add-top-packages', async (ctx, next) => {
+// router for all paths that need verification
+const verification_router: Router = new Router({});
+
+verification_router.use(linkBlockMiddleware);
+
+verification_router.post('/add-top-packages', async (ctx, next) => {
     const {
         platform, count
     } = ctx.request.body;
     const packages = await runCrawler(platform, count);
     ctx.response.body = packages.reduce((total, val) => `${total} ${val},`, "requested packages: ");
 });
+
+router.use(verification_router.routes())
 
 export default router;
 

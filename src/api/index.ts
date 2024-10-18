@@ -4,10 +4,16 @@ import spiderRouter from './spider';
 import searchRouter from './search';
 import crawlerRouter from './crawler';
 import { clearQueue } from '../services/queue-service';
+import { linkBlockMiddleware } from './authentication'
 
 const router: Router = new Router({
     prefix: '/api',
 });
+
+// router for all paths that need verification
+const verification_router: Router = new Router({});
+
+verification_router.use(linkBlockMiddleware);
 
 router.use(dltRouter.routes());
 router.use(spiderRouter.routes());
@@ -23,10 +29,12 @@ router.get('/download', (ctx, next) => {
     ctx.response.body = 'https://github.com/SecureSECO/SecureSECO';
 });
 
-router.get('/clear-queue', (ctx, next) => {
+verification_router.get('/clear-queue', (ctx, next) => {
     clearQueue();
     ctx.response.body = 'Queue has been cleared.';
 });
+
+router.use(verification_router.routes())
 
 export default router;
 
