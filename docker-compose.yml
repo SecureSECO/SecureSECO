@@ -16,6 +16,7 @@ services:
       - ./src:/usr/app/src
       - /var/run/docker.sock:/var/run/docker.sock
       - TrustSECO:/root/.gnupg
+    env_file: ".env"
 
   dlt:
     image: dlt-app
