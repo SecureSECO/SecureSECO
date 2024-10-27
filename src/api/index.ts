@@ -29,6 +29,11 @@ router.get('/download', (ctx, next) => {
     ctx.response.body = 'https://github.com/SecureSECO/SecureSECO';
 });
 
+// whether the server is private or public
+router.get('/server_type', (ctx, next) => {
+    ctx.response.body = process.env.SERVER_TYPE;
+})
+
 verification_router.get('/clear-queue', (ctx, next) => {
     clearQueue();
     ctx.response.body = 'Queue has been cleared.';
