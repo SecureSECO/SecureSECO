@@ -13,9 +13,9 @@ export async function runCrawler(
         `http://spider:5000/get-most-popular-packages?platform=${package_manager}&count=${count}`,
     );
     const packages: PackageData[] = resp.data.map((p) => ({
-        packageName: p.name,
-        packagePlatform: p.platform,
-        packageOwner: p.owner,
+        packageName: p.name.toLowerCase(),
+        packagePlatform: p.platform.toLowerCase(),
+        packageOwner: p.owner.toLowerCase(),
         packageReleases: [p.version],
     }));
     for (let pa of packages) {
