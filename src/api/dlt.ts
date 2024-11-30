@@ -1,8 +1,9 @@
 import Router from 'koa-router';
 import axios from 'axios';
 import {
-    getAccount,
-    getGitHubLink, getJobs, getMetrics, getPackageData, getPackagesData, getTrustFacts, getTrustScore, storeGitHubLink,
+    getAccount, getGitHubLink, getJobs, getMetrics, getPackageData, 
+    getPackagesData, getTrustFacts, getTrustScore, storeGitHubLink, 
+    getTrustScoreCategories
 } from '../services/dlt-service';
 import { getKeys } from '../keys';
 import addAllJobs, {getMostRecentVersionGithub} from '../services/add-job-service';
@@ -86,6 +87,11 @@ router.get('/metrics', async (ctx, next) => {
 router.get('/package/:id/trust-score/:version', async (ctx, next) => {
     const { id, version } = ctx.params;
     ctx.response.body = await getTrustScore(id, version);
+});
+
+router.get('/package/:id/trust-score-categories/:version', async (ctx, next) => {
+    const { id, version } = ctx.params;
+    ctx.response.body = await getTrustScoreCategories(id, version);
 });
 
 router.get('/account', async (ctx, next) => {
