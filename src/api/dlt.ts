@@ -89,6 +89,11 @@ router.get('/package/:id/trust-score/:version', async (ctx, next) => {
     ctx.response.body = await getTrustScore(id, version);
 });
 
+router.get('/package/:id/trust-score/', async (ctx, next) => {
+    const { id } = ctx.params;
+    ctx.response.body = await getTrustScore(id);
+});
+
 router.get('/package/:id/trust-score-categories/:version', async (ctx, next) => {
     const { id, version } = ctx.params;
     ctx.response.body = await getTrustScoreCategories(id, version);

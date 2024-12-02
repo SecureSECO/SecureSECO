@@ -181,12 +181,11 @@ export async function getTrustScoreCategories(packageName, version): Promise<Rec
     });
 }
 
-export async function getTrustScore(packageName, version): Promise<number> {
+export async function getTrustScore(packageName: string, version?: string): Promise<number> {
     const client = await getClient();
-    return client.invoke('trustfacts:calculateTrustScore', {
-        packageName,
-        version,
-    });
+    const data = { packageName };
+    if(version !== undefined) data["version"] = version;
+    return client.invoke('trustfacts:calculateTrustScore', data);
 }
 
 export async function getAccount() : Promise<any> {
