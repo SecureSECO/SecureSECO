@@ -62,9 +62,11 @@ router.post('/get-most-recent-version', async (ctx, next) => {
 });
 
 verification_router.post('/store-github-link', async (ctx, next) => {
-    await storeGitHubLink(ctx.request.body.data);
     const { data } = await axios.create().get(ctx.request.body.data);
     const storedOnGithub = !data.includes("This user hasn't uploaded any GPG keys.");
+    if(storedOnGithub) {
+        await storeGitHubLink(ctx.request.body.data);
+    }
     ctx.response.body = {
         stored_on_github: storedOnGithub,
     };
