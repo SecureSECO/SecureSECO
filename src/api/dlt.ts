@@ -88,7 +88,7 @@ router.get('/package/:id/trust-score/:version', async (ctx, next) => {
     ctx.response.body = await getTrustScore(id, version);
 });
 
-router.get('/account', async (ctx, next) => {
+verification_router.get('/account', async (ctx, next) => {
     ctx.response.body = await getAccount();
 });
 
