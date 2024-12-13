@@ -31,7 +31,7 @@ verification_router.get('/get-gpg-key', async (ctx, next) => {
     ctx.response.body = publicKey;
 });
 
-router.get('/get-github-link', async (ctx, next) => {
+verification_router.get('/get-github-link', async (ctx, next) => {
     ctx.response.body = await getGitHubLink();
 });
 
@@ -88,7 +88,7 @@ router.get('/package/:id/trust-score/:version', async (ctx, next) => {
     ctx.response.body = await getTrustScore(id, version);
 });
 
-router.get('/account', async (ctx, next) => {
+verification_router.get('/account', async (ctx, next) => {
     ctx.response.body = await getAccount();
 });
 
