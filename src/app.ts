@@ -17,6 +17,8 @@ setup();
 
 const app = websockify(new Koa());
 
+app.proxy = true; // Trust proxy fields
+
 app.use(cors()).use(koaBody());
 
 // Api Routes

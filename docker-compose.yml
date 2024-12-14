@@ -5,13 +5,13 @@ services:
       context: .
       args:
         - SECURESECO_PORTAL_IMAGE
-    restart: always
+    restart:  unless-stopped
     depends_on:
       - dlt
     networks:
       - internal
     ports:
-      - "3000:3000"
+      - "127.0.0.1:3000:3000"
     volumes:
       - ./src:/usr/app/src
       - /var/run/docker.sock:/var/run/docker.sock
@@ -21,13 +21,13 @@ services:
   dlt:
     image: dlt-app
     build: ${TRUSTSECO_DLT_GIT_REPO}#${TRUSTSECO_DLT_GIT_BRANCH}
-    restart: always
+    restart:  unless-stopped
     networks:
       - internal
     ports:
       - "8000:8000"
-      - "8080:8080"
-      - "8001:8001"
+      - "127.0.0.1:8080:8080"
+      - "127.0.0.1:8001:8001"
     volumes:
       - TrustSECO:/root/.lisk
       - TrustSECO:/root/.gnupg
@@ -38,8 +38,10 @@ services:
   spider:
     image: spider-app
     build: ${TRUSTSECO_SPIDER_GIT_REPO}#${TRUSTSECO_SPIDER_GIT_BRANCH}
-    restart: always
+    restart:  unless-stopped
     stop_signal: SIGINT
+    ports:
+      - "127.0.0.1:5000:5000"
     networks:
       - internal
     volumes:
@@ -48,7 +50,7 @@ services:
   scanner:
     container_name: ClamAV-daemon
     image: 'clamav/clamav:0.104'
-    restart: always
+    restart:  unless-stopped
     environment:
       - CLAMAV_NO_MILTERD=true
     depends_on:
@@ -59,8 +61,25 @@ services:
       - TrustSECO:/run/clamav
       - ./clamav/configs:/etc/clamav
 
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      - internal
+    env_file: ".env"
+    profiles: ["hosting"]
+
 volumes:
   TrustSECO:
+  caddy_data:
+  caddy_config:
 
 networks:
   internal:
