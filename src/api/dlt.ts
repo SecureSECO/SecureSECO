@@ -1,8 +1,9 @@
 import Router from 'koa-router';
 import axios from 'axios';
 import {
-    getAccount,
-    getGitHubLink, getJobs, getMetrics, getPackageData, getPackagesData, getTrustFacts, getTrustScore, storeGitHubLink,
+    getAccount, getGitHubLink, getJobs, getMetrics, getPackageData, 
+    getPackagesData, getTrustFacts, getTrustScore, storeGitHubLink, 
+    getTrustScoreCategories
 } from '../services/dlt-service';
 import { getKeys } from '../keys';
 import addAllJobs, {getMostRecentVersionGithub} from '../services/add-job-service';
@@ -61,9 +62,11 @@ router.post('/get-most-recent-version', async (ctx, next) => {
 });
 
 verification_router.post('/store-github-link', async (ctx, next) => {
-    await storeGitHubLink(ctx.request.body.data);
     const { data } = await axios.create().get(ctx.request.body.data);
     const storedOnGithub = !data.includes("This user hasn't uploaded any GPG keys.");
+    if(storedOnGithub) {
+        await storeGitHubLink(ctx.request.body.data);
+    }
     ctx.response.body = {
         stored_on_github: storedOnGithub,
     };
@@ -86,6 +89,16 @@ router.get('/metrics', async (ctx, next) => {
 router.get('/package/:id/trust-score/:version', async (ctx, next) => {
     const { id, version } = ctx.params;
     ctx.response.body = await getTrustScore(id, version);
+});
+
+router.get('/package/:id/trust-score/', async (ctx, next) => {
+    const { id } = ctx.params;
+    ctx.response.body = await getTrustScore(id);
+});
+
+router.get('/package/:id/trust-score-categories/:version', async (ctx, next) => {
+    const { id, version } = ctx.params;
+    ctx.response.body = await getTrustScoreCategories(id, version);
 });
 
 verification_router.get('/account', async (ctx, next) => {

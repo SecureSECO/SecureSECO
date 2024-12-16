@@ -173,12 +173,19 @@ export async function getMinimumBounty() : Promise<string> {
     return client.invoke('coda:getMinimumRequiredBounty');
 }
 
-export async function getTrustScore(packageName, version) : Promise<number> {
+export async function getTrustScoreCategories(packageName, version): Promise<Record<string, number>> {
     const client = await getClient();
-    return client.invoke('trustfacts:calculateTrustScore', {
+    return client.invoke('trustfacts:calculateCategoryTrustScores', {
         packageName,
         version,
     });
+}
+
+export async function getTrustScore(packageName: string, version?: string): Promise<number> {
+    const client = await getClient();
+    const data = { packageName };
+    if(version !== undefined) data["version"] = version;
+    return client.invoke('trustfacts:calculateTrustScore', data);
 }
 
 export async function getAccount() : Promise<any> {
