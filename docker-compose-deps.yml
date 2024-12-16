@@ -3,7 +3,10 @@ version: "3.7"
 services:
   secureseco-portal:
     image: ${SECURESECO_PORTAL_IMAGE}
-    build: ${SECURESECO_PORTAL_GIT_REPO}#${SECURESECO_PORTAL_GIT_BRANCH}
+    build: 
+      context: ${SECURESECO_PORTAL_GIT_REPO}#${SECURESECO_PORTAL_GIT_BRANCH}
+      args:
+        - VITE_HOST=${VITE_HOST:-127.0.0.1:3000}
 
   searchseco-controller:
     image: ${SEARCHSECO_CONTROLLER_IMAGE}
