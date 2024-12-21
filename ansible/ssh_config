@@ -1,0 +1,18 @@
+IdentityFile ~/.ssh/rsa_key1
+
+Host SteppingStone
+  HostName up.science.uu.nl
+  User martijnv
+  ForwardAgent yes
+
+Host Seco1
+  ForwardAgent yes
+  HostName science-vs396.science.uu.nl
+  ProxyCommand ssh -F ./ssh_config -A SteppingStone -W %h:%p
+  User root
+
+Host Seco2
+  HostName science-vs397.science.uu.nl
+  ForwardAgent yes
+  ProxyCommand ssh -F ./ssh_config -A SteppingStone -W %h:%p
+  User root

@@ -1,0 +1,19 @@
+- name: Clone secureseco repo and run run.sh
+  hosts: uuservers
+  become: yes
+
+  tasks:
+    - ansible.builtin.git:
+        repo: 'https://github.com/SecureSECO/SecureSECO'
+        dest: /datadisk/SecureSECO
+        version: reverse-proxy-and-hosting
+    - name: copy .env files
+      template:
+        src: "{{ inventory_hostname }}.env"
+        dest: /datadisk/SecureSECO/.env
+        mode: '0644'
+    - name: Run the run script
+      ansible.builtin.script: 
+        cmd: run_server.sh
+        chdir: /datadisk/SecureSECO
+

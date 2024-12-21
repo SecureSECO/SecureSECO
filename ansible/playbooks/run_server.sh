@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+
 if [ ! -x "$(command -v docker)" ]; then
     echo "Please make sure docker is installed."
     exit 1
@@ -15,8 +16,6 @@ echo 'Starting up SecureSECO'
 docker compose -f docker-compose-deps.yml pull
 docker compose -f docker-compose-deps.yml build
 
-# run docker containers
-docker compose up --build
+# run docker containers as a daemon
+docker compose up -d --build
 
-# This program has been developed by students from the bachelor Computer Science at Utrecht University within the Software Project course.
-# © Copyright Utrecht University (Department of Information and Computing Sciences)

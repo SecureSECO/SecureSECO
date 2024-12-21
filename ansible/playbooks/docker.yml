@@ -1,0 +1,60 @@
+- name: Install docker and configure Docker data directory
+  hosts: uuservers
+  become: yes
+
+  tasks:
+    - name: Update apt package cache
+      apt:
+        update_cache: yes
+
+    - name: Install dependencies
+      apt:
+        name:
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - software-properties-common
+
+    - name: Add Docker GPG key
+      apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        state: present
+
+    - name: Add Docker APT repository
+      apt_repository:
+        repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu focal stable
+        state: present
+
+    - name: Update apt package cache (again)
+      apt:
+        update_cache: yes
+
+    - name: Install Docker
+      apt:
+        name: docker-ce
+        state: present
+
+    - name: Create the directory for Docker data-root
+      file:
+        path: /datadisk/docker
+        state: directory
+        owner: root
+        group: root
+        mode: '0755'
+
+    - name: Configure Docker daemon.json for new data-root
+      copy:
+        dest: /etc/docker/daemon.json
+        content: |
+          {
+            "data-root": "/datadisk/docker"
+          }
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: Restart Docker to apply changes
+      service:
+        name: docker
+        state: reloaded
+        enabled: true
