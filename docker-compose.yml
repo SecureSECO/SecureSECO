@@ -5,7 +5,6 @@ services:
       context: .
       args:
         - SECURESECO_PORTAL_IMAGE
-        VITE_HOST: "${VITE_HOST:-127.0.0.1:3000}"
     restart:  unless-stopped
     depends_on:
       - dlt
