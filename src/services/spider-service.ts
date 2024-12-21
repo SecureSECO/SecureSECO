@@ -7,6 +7,7 @@ import {
 import { encodeFact, getModule, getRandomJob, getAllUnfinishedJobs, getJobDetails } from './dlt-service';
 import { getKeys, signMessage } from '../keys';
 import { addToHeap, isJobInHeap } from './queue-service';
+import { storeGitHubLink } from './dlt-service';
 
 const SPIDER_ENDPOINT = 'http://spider:5000/';
 const emitter = new Emitter();
@@ -15,6 +16,25 @@ const spider = axios.create({
     baseURL: SPIDER_ENDPOINT,
 });
 const retryCount = 2; // How often a job should be retried before giving up
+
+/** Loads the spider settings from environments variables if they are set. */
+export async function loadSpiderSettings() {
+    let tokens = {
+        github_token: process.env.GITHUB_TOKEN,
+        libraries_token: process.env.LIBRARIESIO_TOKEN,
+    };
+    if (tokens.github_token !== "" && tokens.libraries_token !== "") {
+        await setTokens(tokens);
+    }
+    let gh_username = process.env.GH_USERNAME;
+    if (gh_username !== "") {
+        await storeGitHubLink(`https://github.com/${gh_username.toLowerCase()}.gpg`)
+    }
+    let spider_enabled = process.env.ENABLE_SPIDER;
+    if (spider_enabled === "true") {
+        await startSpider();
+    }
+}
 
 export async function setTokens(tokens: Tokens): Promise<string> {
     const { data } = await spider.post('set_tokens', tokens);
@@ -73,8 +93,7 @@ export async function startSpider() {
     while (running) {
         let jobs = await getAllUnfinishedJobs();
 
-        if (jobs.length === 0)
-        {
+        if (jobs.length === 0) {
             emitter.emit('info', 'No Spider job available! Sleeping for 30 sec.');
             await sleep(30 * 1000);
             continue;
@@ -84,8 +103,7 @@ export async function startSpider() {
             !(job.jobID in jobCounts && jobCounts[job.jobID] >= retryCount) &&
             !(isJobInHeap(job.jobID)))
 
-        if (filteredJobs.length === 0)
-        {
+        if (filteredJobs.length === 0) {
             emitter.emit('info', 'All available spider jobs have been tried more than retry count already! Sleeping for 30 sec.');
             await sleep(30 * 1000);
             continue;

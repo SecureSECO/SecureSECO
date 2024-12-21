@@ -8,10 +8,12 @@ import apiRouter from './api';
 import websocketRouter from './websocket';
 import setup from './keys';
 import { startQueue } from './services/queue-service';
+import { loadSpiderSettings } from './services/spider-service';
 
 setup();
 (async () => {
     await sleep(5000);
+    await loadSpiderSettings();
     await startQueue();
 })();
 
