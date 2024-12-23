@@ -23,15 +23,15 @@ export async function loadSpiderSettings() {
         github_token: process.env.GITHUB_TOKEN,
         libraries_token: process.env.LIBRARIESIO_TOKEN,
     };
-    if (tokens.github_token !== "" && tokens.libraries_token !== "") {
+    if (tokens.github_token && tokens.libraries_token) {
         await setTokens(tokens);
     }
     let gh_username = process.env.GH_USERNAME;
-    if (gh_username !== "") {
+    if (gh_username) {
         await storeGitHubLink(`https://github.com/${gh_username.toLowerCase()}.gpg`)
     }
     let spider_enabled = process.env.ENABLE_SPIDER;
-    if (spider_enabled === "true") {
+    if (spider_enabled && spider_enabled === "true") {
         await startSpider();
     }
 }
