@@ -13,8 +13,8 @@ import { loadSpiderSettings } from './services/spider-service';
 setup();
 (async () => {
     await sleep(5000);
-    await loadSpiderSettings();
     await startQueue();
+    await loadSpiderSettings();
 })();
 
 const app = websockify(new Koa());
