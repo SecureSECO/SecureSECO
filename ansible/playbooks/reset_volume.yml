@@ -1,0 +1,36 @@
+- name: Reset the data volume
+  hosts: all
+  become: yes
+
+  vars_prompt:
+    - name: "confirmation"
+      prompt: "Resetting the volumes, and pruning the following hosts: {{ ansible_play_hosts }}, are you sure? (yes/no)?"
+      private: no
+
+  tasks:
+    - name: Make sure service is down
+      community.docker.docker_compose_v2:
+        project_src: /datadisk/SecureSECO
+        state: absent
+        remove_volumes: true
+        remove_images: all
+        remove_orphans: true
+      when: confirmation | bool
+    - name: Prune everything
+      community.docker.docker_prune:
+        containers: true
+        images: true
+        networks: true
+        volumes: true
+        builder_cache: true
+      when: confirmation | bool
+    - name: Remove the volume
+      community.docker.docker_volume:
+        name: secureseco_TrustSECO
+        state: absent
+      when: confirmation | bool
+    - name: Restart the server
+      ansible.builtin.script: 
+        cmd: run_server.sh
+        chdir: /datadisk/SecureSECO
+      when: confirmation | bool
