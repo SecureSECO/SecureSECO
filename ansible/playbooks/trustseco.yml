@@ -1,5 +1,5 @@
 - name: Clone secureseco repo and run run.sh
-  hosts: uuservers
+  hosts: all
   become: yes
 
   tasks:
@@ -16,4 +16,3 @@
       ansible.builtin.script: 
         cmd: run_server.sh
         chdir: /datadisk/SecureSECO
-

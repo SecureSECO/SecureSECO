@@ -5,6 +5,7 @@ import {
     getMinimumBounty,
     getModule,
 } from './dlt-service';
+import { getTokens } from '../services/spider-service';
 import { CodaJob, PackageData } from '../types';
 import { getKeys, signMessage } from '../keys';
 import { addToHeap } from './queue-service';
@@ -78,8 +79,11 @@ export async function getMostRecentVersionGithub(
 ): Promise<string> {
     let resp: AxiosResponse;
     try {
+        let gh_token = (await getTokens()).github_token;
+        let config = gh_token ? { headers: { Authorization: `token ${gh_token}` }} : {};
         resp = await axios.get(
             `https://api.github.com/repos/${packageData.packageOwner}/${packageData.packageName}/tags?per_page=100`,
+            config
         );
     } catch (error) {
         console.log("error while retreiving github tags");
