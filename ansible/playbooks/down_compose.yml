@@ -1,0 +1,9 @@
+- name: Stop the docker compose service
+  hosts: all
+  become: yes
+
+  tasks:
+    - name: stop the docker service
+      community.docker.docker_compose_v2:
+        project_src: /datadisk/SecureSECO
+        state: absent

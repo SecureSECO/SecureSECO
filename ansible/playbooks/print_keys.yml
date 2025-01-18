@@ -9,6 +9,6 @@
         command: curl localhost:3000/api/dlt/get-gpg-key
         project_src: /datadisk/SecureSECO
       register: result
-    - name: print gpg key
+    - name: print gpg key, make sure to restart the server after adding the keys (restart_compose.yml)
       ansible.builtin.debug:
         msg: " {{ inventory_hostname }}: {{ result.stdout }}"

@@ -1,0 +1,9 @@
+- name: Restart the docker compose service
+  hosts: all
+  become: yes
+
+  tasks:
+    - name: Restart service
+      community.docker.docker_compose_v2:
+        project_src: /datadisk/SecureSECO
+        state: restarted
