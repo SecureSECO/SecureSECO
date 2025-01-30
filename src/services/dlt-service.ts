@@ -107,9 +107,14 @@ export async function getJobDetails(job: CodaJob): Promise<RandomJobResult> {
 
 export async function getTrustFacts(packageName: string): Promise<{facts: Fact[]}> {
     const client = await getClient();
-    return client.invoke('trustfacts:getPackageFacts', {
+    const res = await client.invoke('trustfacts:getPackageFacts', {
         packageName,
-    });
+    }) as {facts: Fact[]}|[];
+    if (Array.isArray(res) && res.length === 0)
+    {
+        return {facts: []}
+    }
+    return res as {facts: Fact[]};
 }
 
 export function getModule(name: string) {

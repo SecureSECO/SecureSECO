@@ -80,9 +80,9 @@ async function addJob(fact: string, packageData: PackageData) {
 async function addPackage(packageData: PackageData) {
     const pack = await getPackageData(packageData.packageName);
     // If all versions are already added, there is nothing left to do, so return
-    if (pack !== [] &&
+    if (pack !== [] && pack !== undefined &&
         packageData.packageReleases.every(
-            (release) => (pack as PackageData).packageReleases.includes(release))
+            (release) => (pack as PackageData).packageReleases?.includes(release))
     ) {
         return;
     }
@@ -129,6 +129,7 @@ export async function getMostRecentVersionGithub(
 /** Get the most recent version of a package based on semantic versioning,
  * excluding prerelease versions. */
 export function getMostRecentVersion(versions: string[]): string {
+    if (versions.length === 0) return "";
     let parsed_versions: { raw_string: string; parsed: semver.SemVer }[] = [];
     for (let i = 0; i < versions.length; i++) {
         let tag = versions[i];
@@ -141,6 +142,7 @@ export function getMostRecentVersion(versions: string[]): string {
         }
     }
     parsed_versions.sort((x, y) => semver.rcompare(x.parsed, y.parsed));
+    if (parsed_versions.length === 0) return versions[0];
     return parsed_versions[0].raw_string;
 }
 
