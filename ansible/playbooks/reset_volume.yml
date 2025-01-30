@@ -29,8 +29,12 @@
         name: secureseco_TrustSECO
         state: absent
       when: confirmation | bool
-    - name: Restart the server
+    - name: Run the pull/build dependecies script
       ansible.builtin.script: 
-        cmd: run_server.sh
+        cmd: pull_build_dependecies.sh
         chdir: /datadisk/SecureSECO
-      when: confirmation | bool
+    - name: Start service
+      community.docker.docker_compose_v2:
+        project_src: /datadisk/SecureSECO
+        state: present
+        build: always
