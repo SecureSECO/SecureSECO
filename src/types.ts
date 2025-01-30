@@ -30,6 +30,16 @@ export interface AccountId {
     uid: string;
 }
 
+export interface Fact {
+    fact: string,
+    factData: string,
+    version: string,
+    jobID: number,
+    account: {
+        uid: string,
+    }
+}
+
 export interface RandomJobResult {
     package: string,
     version: string,

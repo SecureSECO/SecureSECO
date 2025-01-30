@@ -3,7 +3,7 @@ import { RegisteredModule } from '@liskhq/lisk-api-client/dist-node/types';
 import { APIClient } from '@liskhq/lisk-api-client';
 import fs from 'fs';
 import {
-    CodaJob, Job, RandomJobResult, PackageData
+    CodaJob, Job, RandomJobResult, PackageData, Fact
 } from '../types';
 import 'dotenv/config';
 import { getKeys } from '../keys';
@@ -86,7 +86,7 @@ export async function getAllUnfinishedJobs(): Promise<CodaJob[]> {
 }
 
 export async function getJobDetails(job: CodaJob): Promise<RandomJobResult> {
-    let packageData = await getPackageData(job.package);
+    let packageData = await getPackageData(job.package) as PackageData;
 
     return {
         package: job.package,
@@ -105,7 +105,7 @@ export async function getJobDetails(job: CodaJob): Promise<RandomJobResult> {
     }
 }
 
-export async function getTrustFacts(packageName: string): Promise<any> {
+export async function getTrustFacts(packageName: string): Promise<{facts: Fact[]}> {
     const client = await getClient();
     return client.invoke('trustfacts:getPackageFacts', {
         packageName,
@@ -116,7 +116,7 @@ export function getModule(name: string) {
     return registeredTransactions[name];
 }
 
-export async function getPackageData(packageName): Promise<PackageData> {
+export async function getPackageData(packageName): Promise<PackageData | []> {
     const client = await getClient();
     return client.invoke('packagedata:getPackageInfo', {
         packageName,
