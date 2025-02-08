@@ -3,8 +3,9 @@ import { RegisteredModule } from '@liskhq/lisk-api-client/dist-node/types';
 import { APIClient } from '@liskhq/lisk-api-client';
 import fs from 'fs';
 import {
-    CodaJob, Job, RandomJobResult, PackageData, Fact
+    CodaJob, RandomJobResult, PackageData, Fact
 } from '../types';
+import axios from 'axios';
 import 'dotenv/config';
 import { getKeys } from '../keys';
 import { addToHeap } from './queue-service';
@@ -24,7 +25,19 @@ export const getClient = async () => {
     return clientCache;
 };
 
-export async function storeGitHubLink(link: string) {
+export async function storeGitHubLink(link: string): Promise<Boolean> {
+    let data;
+    try {
+        data = (await axios.create().get(link)).data;
+    } catch {
+        return false;
+    }
+
+    const storedOnGithub = !data.includes("This user hasn't uploaded any GPG keys.");
+    if (!storedOnGithub) {
+        return false
+    }
+
     const toStore = {
         github_link: link,
     };
@@ -47,6 +60,8 @@ export async function storeGitHubLink(link: string) {
         priority: 5,
         created_at: performance.now(),
     });
+
+    return true;
 }
 
 export async function getGitHubLink() {
