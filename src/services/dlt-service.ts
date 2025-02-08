@@ -30,18 +30,26 @@ export async function storeGitHubLink(link: string): Promise<Boolean> {
     try {
         data = (await axios.create().get(link)).data;
     } catch {
+        console.log("Couldn't retrieve github link.");
         return false;
     }
 
     const storedOnGithub = !data.includes("This user hasn't uploaded any GPG keys.");
     if (!storedOnGithub) {
+        console.log("User hasn't uploaded GPG keys yet.");
         return false
+    }
+    const { publicKey } = await getKeys();
+    if (publicKey.replace(/\s/g, "") !== data.replace(/\s/g, "")){
+        console.log("Local gpg key and public gpg key don't match!")
+        return false;
     }
 
     const toStore = {
         github_link: link,
     };
 
+    console.log("Storing gpg key...")
     await fs.promises.writeFile('storage.json', JSON.stringify(toStore), 'utf8');
 
     const module = registeredTransactions['accounts:AccountsAdd'];
