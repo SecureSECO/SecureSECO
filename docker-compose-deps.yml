@@ -7,6 +7,7 @@ services:
       context: ${SECURESECO_PORTAL_GIT_REPO}#${SECURESECO_PORTAL_GIT_BRANCH}
       args:
         - VITE_HOST=${VITE_HOST:-127.0.0.1:3000}
+        - VITE_PROTOCOL=${VITE_PROTOCOL:-http}
 
   searchseco-controller:
     image: ${SEARCHSECO_CONTROLLER_IMAGE}
