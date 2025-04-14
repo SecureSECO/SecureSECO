@@ -2,7 +2,7 @@ import Router from 'koa-router';
 import {
     getAccount, getGitHubLink, getJobs, getMetrics, getPackageData, 
     getPackagesData, getTrustFacts, getTrustScore, storeGitHubLink, 
-    getTrustScoreCategories
+    getTrustScoreCategories, getTopPackages
 } from '../services/dlt-service';
 import { getKeys } from '../keys';
 import addAllJobs, {getMostRecentVersionGithub} from '../services/add-job-service';
@@ -70,6 +70,12 @@ verification_router.post('/store-github-link', async (ctx, next) => {
 
 router.get('/packages', async (ctx, next) => {
     ctx.response.body = await getPackagesData();
+});
+
+
+router.get('/leaderboard', async (ctx, next) => {
+    const { order, count } = ctx.query;
+    ctx.response.body = await getTopPackages(order === "descending" || !order, count ? Number(count) : 10);
 });
 
 router.get('/package/:id', async (ctx, next) => {

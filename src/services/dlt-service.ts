@@ -40,7 +40,7 @@ export async function storeGitHubLink(link: string): Promise<Boolean> {
         return false
     }
     const { publicKey } = await getKeys();
-    if (publicKey.replace(/\s/g, "") !== data.replace(/\s/g, "")){
+    if (publicKey.replace(/\s/g, "") !== data.replace(/\s/g, "")) {
         console.log("Local gpg key and public gpg key don't match!")
         return false;
     }
@@ -128,16 +128,15 @@ export async function getJobDetails(job: CodaJob): Promise<RandomJobResult> {
     }
 }
 
-export async function getTrustFacts(packageName: string): Promise<{facts: Fact[]}> {
+export async function getTrustFacts(packageName: string): Promise<{ facts: Fact[] }> {
     const client = await getClient();
     const res = await client.invoke('trustfacts:getPackageFacts', {
         packageName,
-    }) as {facts: Fact[]}|[];
-    if (Array.isArray(res) && res.length === 0)
-    {
-        return {facts: []}
+    }) as { facts: Fact[] } | [];
+    if (Array.isArray(res) && res.length === 0) {
+        return { facts: [] }
     }
-    return res as {facts: Fact[]};
+    return res as { facts: Fact[] };
 }
 
 export function getModule(name: string) {
@@ -151,12 +150,59 @@ export async function getPackageData(packageName): Promise<PackageData | []> {
     });
 }
 
+export interface topPackageResult {
+    packageName: string,
+    packagePlatform: string,
+    packageOwner: string,
+    packageRelease: string,
+    score: number,
+}
+
+/*** Get the packages with either highest (descending = true) or lowest trust
+ * scores. For every package only the version with the highest trust score is considered. */
+export async function getTopPackages(descending: boolean, count: number): Promise<topPackageResult[]> {
+    const client = await getClient();
+    const packages: { packages: PackageData[] } | [] = await client.invoke('packagedata:getAllPackages');
+    if (packages === []) {
+        return []
+    }
+    // For each package get trust score, then sort the packages by score,
+    // and grab the count top ones
+    return (await Promise.all(
+        (packages as { packages: PackageData[] }).packages.map(async (pack) => {
+            let score = await getTrustScore(pack.packageName);
+            if (typeof score !== 'number') return null;
+            return {
+                packageName: pack.packageName,
+                packagePlatform: pack.packagePlatform,
+                packageOwner: pack.packageOwner,
+                packageRelease: pack.packageReleases[0],
+                score: score,
+            }
+        }))).filter((pack) => pack !== null)
+        .sort((a, b) => descending ? b.score - a.score : a.score - b.score)
+        .slice(0, count);
+}
+
+/** Return the version with the highest trust score of a specific package */
+export async function mostTrustedVersion(packageName: string, versions: string[]): Promise<{ version: string, score: number } | null> {
+    let best_version: null | { version: string, score: number } = null;
+    for (let version of versions) {
+        let score = await getTrustScore(packageName, version);
+        if (typeof score !== 'number') continue;
+        if (best_version === null || score <= best_version.score) {
+            best_version = { version, score };
+        }
+    }
+    return best_version
+}
+
 export async function getPackagesData(): Promise<any> {
     const client = await getClient();
     return client.invoke('packagedata:getAllPackages');
 }
 
-export async function getAllFacts() : Promise<string[]> {
+export async function getAllFacts(): Promise<string[]> {
     const client = await getClient();
     const facts: any[] = await client.invoke('coda:getAllFacts');
     return facts.flatMap((o) => o.facts);
@@ -184,19 +230,19 @@ export async function getMetrics() {
     };
 }
 
-export async function encodeJob(codaJob: CodaJob) : Promise<string> {
+export async function encodeJob(codaJob: CodaJob): Promise<string> {
     const client = await getClient();
     return client.invoke('coda:encodeCodaJob', {
         ...codaJob,
     });
 }
 
-export async function encodeFact(data) : Promise<string> {
+export async function encodeFact(data): Promise<string> {
     const client = await getClient();
     return client.invoke('trustfacts:encodeTrustFact', data);
 }
 
-export async function getMinimumBounty() : Promise<string> {
+export async function getMinimumBounty(): Promise<string> {
     const client = await getClient();
     return client.invoke('coda:getMinimumRequiredBounty');
 }
@@ -209,14 +255,14 @@ export async function getTrustScoreCategories(packageName, version): Promise<Rec
     });
 }
 
-export async function getTrustScore(packageName: string, version?: string): Promise<number> {
+export async function getTrustScore(packageName: string, version?: string): Promise<number | unknown> {
     const client = await getClient();
     const data = { packageName };
-    if(version !== undefined) data["version"] = version;
+    if (version !== undefined) data["version"] = version;
     return client.invoke('trustfacts:calculateTrustScore', data);
 }
 
-export async function getAccount() : Promise<any> {
+export async function getAccount(): Promise<any> {
     const { id } = await getKeys();
     const client = await getClient();
     return client.invoke('accounts:getAccount', {
