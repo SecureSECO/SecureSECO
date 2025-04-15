@@ -197,9 +197,15 @@ export async function mostTrustedVersion(packageName: string, versions: string[]
     return best_version
 }
 
-export async function getPackagesData(): Promise<any> {
+export async function getPackagesData(from?: number, count?: number, query?: string): Promise<{ packages: PackageData[], total: number }> {
     const client = await getClient();
-    return client.invoke('packagedata:getAllPackages');
+    let packages: {packages: PackageData[]} = await client.invoke('packagedata:getAllPackages');
+    if (query) {
+        packages.packages = packages.packages.filter((pack) => pack.packageName.includes(query) || pack.packageOwner.includes(query));
+    }
+    let total = packages.packages.length;
+    packages.packages = packages.packages.slice(from, typeof count === "number" && typeof from === "number" ? from + count : undefined);
+    return { packages: packages.packages, total };
 }
 
 export async function getAllFacts(): Promise<string[]> {

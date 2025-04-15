@@ -69,7 +69,13 @@ verification_router.post('/store-github-link', async (ctx, next) => {
 });
 
 router.get('/packages', async (ctx, next) => {
-    ctx.response.body = await getPackagesData();
+    let { from, count, query } = ctx.query;
+
+    ctx.response.body = await getPackagesData(
+        from ? Number(from) : undefined,
+        count ? Number(count) : undefined,
+        (Array.isArray(query) ? query.flat(1) : query) as string
+    );
 });
 
 
