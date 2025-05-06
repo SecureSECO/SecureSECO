@@ -1,5 +1,3 @@
-import { Transaction } from '@liskhq/lisk-api-client/dist-node/transaction';
-
 export interface Job {
     packageName: string,
     packagePlatform: string,
@@ -88,11 +86,15 @@ export interface QueueTransaction {
     transaction: QTransaction
 }
 
-export interface QTransaction {
-    moduleID: number,
-    assetID: number,
-    fee: BigInt,
-    asset: Record<string, unknown>
+export interface QTransaction 
+{
+    module: string;
+    command: string;
+    fee: string | bigint;
+    nonce?: string | bigint;
+    senderPublicKey?: string;
+    params: Record<string, unknown>;
+    signatures?: string[];
 }
 
 export interface Miner {

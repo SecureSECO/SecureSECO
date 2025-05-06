@@ -2,12 +2,13 @@
 import axios from 'axios';
 import Emitter from 'node:events';
 import {
-    Job, RandomJobResult, SpiderJob, Tokens,
+    RandomJobResult, SpiderJob, Tokens,
 } from '../types';
-import { encodeFact, getModule, getRandomJob, getAllUnfinishedJobs, getJobDetails } from './dlt-service';
+import { encodeFact, getAllUnfinishedJobs, getJobDetails } from './dlt-service';
 import { getKeys, signMessage } from '../keys';
 import { addToHeap, isJobInHeap } from './queue-service';
 import { storeGitHubLink } from './dlt-service';
+import { performance } from 'perf_hooks';
 
 const SPIDER_ENDPOINT = 'http://spider:5000/';
 const emitter = new Emitter();
@@ -146,12 +147,11 @@ export async function startSpider() {
             signature,
         };
 
-        const module = getModule('trustfacts:AddFacts');
         const transaction = {
-            moduleID: module.moduleID,
-            assetID: module.assetID,
+            module: "trustfacts",
+            command: "addFact",
             fee: BigInt(100000000),
-            asset: trustFact as unknown as Record<string, unknown>,
+            params: trustFact as unknown as Record<string, unknown>,
         };
 
         emitter.emit('info', `Finished job ${job.jobID}, adding to dlt queue!`);

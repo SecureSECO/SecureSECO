@@ -1,5 +1,4 @@
 import { apiClient, transactions } from '@liskhq/lisk-client';
-import { RegisteredModule } from '@liskhq/lisk-api-client/dist-node/types';
 import { APIClient } from '@liskhq/lisk-api-client';
 import fs from 'fs';
 import {
@@ -9,18 +8,17 @@ import axios from 'axios';
 import 'dotenv/config';
 import { getKeys } from '../keys';
 import { addToHeap } from './queue-service';
+import { DecodedTransactionJSON } from '@liskhq/lisk-api-client/dist-node/types';
+import { performance } from 'perf_hooks';
 
-const DLT_ENDPOINT = 'ws://dlt:8080/ws';
-export const getPassphrase = () => 'wat het nu is ofzo maakt me echt niet uit';
+const DLT_ENDPOINT = 'ws://dlt:7887/rpc-ws';
+export const getPrivateKey = () => '51f54d4709f8cecbaa6787d0b38a295ff881de36a80c3dc1cc8b59fc15ef286f190a4c5974aa559b83bf00d4a6c4b2d1c9fe49696e1fbaefabb9b37e8ce5053a';
 
 let clientCache: APIClient;
-const registeredTransactions: { [name: string]: { moduleID: number, assetID: number } } = {};
 
 export const getClient = async () => {
     if (!clientCache) {
         clientCache = await apiClient.createWSClient(DLT_ENDPOINT);
-        // eslint-disable-next-line no-use-before-define
-        await loadTransactions();
     }
     return clientCache;
 };
@@ -52,12 +50,11 @@ export async function storeGitHubLink(link: string): Promise<Boolean> {
     console.log("Storing gpg key...")
     await fs.promises.writeFile('storage.json', JSON.stringify(toStore), 'utf8');
 
-    const module = registeredTransactions['accounts:AccountsAdd'];
     const transaction = {
-        moduleID: module.moduleID,
-        assetID: module.assetID,
+        module: "accounts",
+        command: "accountAdd",
         fee: BigInt(10000000),
-        asset: {
+        params: {
             url: link,
         },
     };
@@ -84,16 +81,7 @@ export async function getGitHubLink() {
 
 export async function getJobs(): Promise<CodaJob[]> {
     const client = await getClient();
-    return client.invoke('coda:getJobs');
-}
-
-export async function getRandomJob(): Promise<RandomJobResult> {
-    const { id } = await getKeys();
-    console.log(id);
-    const client = await getClient();
-    return client.invoke('coda:getRandomJob', {
-        uid: id,
-    });
+    return client.invoke('coda_getJobs');
 }
 
 export async function getAllUnfinishedJobs(): Promise<CodaJob[]> {
@@ -130,24 +118,30 @@ export async function getJobDetails(job: CodaJob): Promise<RandomJobResult> {
 
 export async function getTrustFacts(packageName: string): Promise<{ facts: Fact[] }> {
     const client = await getClient();
-    const res = await client.invoke('trustfacts:getPackageFacts', {
+    const res = await client.invoke('trustfacts_getPackageFacts', {
         packageName,
-    }) as { facts: Fact[] } | [];
-    if (Array.isArray(res) && res.length === 0) {
-        return { facts: [] }
+    }) as unknown;
+    if (typeof res === 'object' && res !== null && 'facts' in res && Array.isArray((res as any).facts)) {
+        return res as { facts: Fact[] };
     }
-    return res as { facts: Fact[] };
+    return { facts: [] };
 }
 
-export function getModule(name: string) {
-    return registeredTransactions[name];
-}
-
-export async function getPackageData(packageName): Promise<PackageData | []> {
+export async function getPackageData(packageName: string): Promise<PackageData | []> {
     const client = await getClient();
-    return client.invoke('packagedata:getPackageInfo', {
+    const res = await client.invoke('packageData_getPackageInfo', {
         packageName,
     });
+    if (
+        typeof res.packageName === 'string' &&
+        typeof res.packagePlatform === 'string' &&
+        typeof res.packageOwner === 'string' &&
+        Array.isArray(res.packageReleases)
+    ) {
+        return res as unknown as PackageData;
+    }
+    // previous dlt version used empty list to indicate missing values, this is kept here to keep the api compatible
+    return [];
 }
 
 export interface topPackageResult {
@@ -162,10 +156,8 @@ export interface topPackageResult {
  * scores. For every package only the version with the highest trust score is considered. */
 export async function getTopPackages(descending: boolean, count: number): Promise<topPackageResult[]> {
     const client = await getClient();
-    const packages: { packages: PackageData[] } | [] = await client.invoke('packagedata:getAllPackages');
-    if (packages === []) {
-        return []
-    }
+    const packages: { packages: PackageData[] } = await client.invoke('packageData_getAllPackages');
+
     // For each package get trust score, then sort the packages by score,
     // and grab the count top ones
     return (await Promise.all(
@@ -199,7 +191,7 @@ export async function mostTrustedVersion(packageName: string, versions: string[]
 
 export async function getPackagesData(from?: number, count?: number, query?: string): Promise<{ packages: PackageData[], total: number }> {
     const client = await getClient();
-    let packages: {packages: PackageData[]} = await client.invoke('packagedata:getAllPackages');
+    let packages: {packages: PackageData[]} = await client.invoke('packageData_getAllPackages');
     if (query) {
         packages.packages = packages.packages.filter((pack) => pack.packageName.includes(query) || pack.packageOwner.includes(query));
     }
@@ -210,7 +202,7 @@ export async function getPackagesData(from?: number, count?: number, query?: str
 
 export async function getAllFacts(): Promise<string[]> {
     const client = await getClient();
-    const facts: any[] = await client.invoke('coda:getAllFacts');
+    const facts: any[] = await client.invoke('coda_getAllFacts');
     return facts.flatMap((o) => o.facts);
 }
 
@@ -238,24 +230,24 @@ export async function getMetrics() {
 
 export async function encodeJob(codaJob: CodaJob): Promise<string> {
     const client = await getClient();
-    return client.invoke('coda:encodeCodaJob', {
+    return client.invoke('coda_encodeCodaJob', {
         ...codaJob,
     });
 }
 
 export async function encodeFact(data): Promise<string> {
     const client = await getClient();
-    return client.invoke('trustfacts:encodeTrustFact', data);
+    return client.invoke('trustfacts_encodeTrustFact', data);
 }
 
 export async function getMinimumBounty(): Promise<string> {
     const client = await getClient();
-    return client.invoke('coda:getMinimumRequiredBounty');
+    return client.invoke('coda_getMinimumRequiredBounty');
 }
 
 export async function getTrustScoreCategories(packageName, version): Promise<Record<string, number>> {
     const client = await getClient();
-    return client.invoke('trustfacts:calculateCategoryTrustScores', {
+    return client.invoke('trustfacts_calculateCategoryTrustScores', {
         packageName,
         version,
     });
@@ -265,18 +257,18 @@ export async function getTrustScore(packageName: string, version?: string): Prom
     const client = await getClient();
     const data = { packageName };
     if (version !== undefined) data["version"] = version;
-    return client.invoke('trustfacts:calculateTrustScore', data);
+    return client.invoke('trustfacts_calculateTrustScore', data);
 }
 
 export async function getAccount(): Promise<any> {
     const { id } = await getKeys();
     const client = await getClient();
-    return client.invoke('accounts:getAccount', {
+    return client.invoke('accounts_getAccount', {
         uid: id,
     });
 }
 
-export async function runTransaction(transaction: Record<string, unknown>) {
+export async function runTransaction(transaction: DecodedTransactionJSON<Record<string, unknown>>) {
     const client = await getClient();
     await client.transaction.send(transaction);
 }
@@ -285,22 +277,8 @@ export async function getMinFee(transaction) {
     const client = await getClient();
     // eslint-disable-next-line no-param-reassign
     transaction.fee = BigInt(transactions.convertLSKToBeddows('1'));
-    const signedTxWithSomeFee = await client.transaction.create(transaction, getPassphrase());
+    const signedTxWithSomeFee = await client.transaction.create(transaction, getPrivateKey());
     return client.transaction.computeMinFee(signedTxWithSomeFee);
-}
-
-async function loadTransactions() {
-    const client = await getClient();
-    const response: RegisteredModule[] = await client.invoke('app:getRegisteredModules');
-
-    response.forEach((module: RegisteredModule) => {
-        module.transactionAssets.forEach((asset) => {
-            registeredTransactions[`${module.name}:${asset.name}`] = {
-                moduleID: module.id,
-                assetID: asset.id,
-            };
-        });
-    });
 }
 
 /* This program has been developed by students from the bachelor Computer Science at Utrecht University within the Software Project course.

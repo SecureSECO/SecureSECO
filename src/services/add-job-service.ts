@@ -3,7 +3,6 @@ import {
     encodeJob,
     getAllFacts,
     getMinimumBounty,
-    getModule,
     getJobs,
     getTrustFacts,
     getPackageData
@@ -14,6 +13,7 @@ import { getKeys, signMessage } from '../keys';
 import { addToHeap } from './queue-service';
 import axios, { AxiosResponse } from 'axios';
 import semver from 'semver';
+import { performance } from 'perf_hooks';
 
 // @ts-ignore
 // eslint-disable-next-line no-extend-native
@@ -33,7 +33,7 @@ export default async function addAllJobs(packageData: PackageData) {
     // all facts for the same package, version and the current user
     const known_facts = (await getTrustFacts(packageData.packageName)).facts.filter(
         (fact) => packageData.packageReleases.includes(fact.version) && fact.account.uid === id
-    ).map((fact) => fact.fact);;
+    ).map((fact) => fact.fact);
     // facts without the already known facts and jobs
     const facts = (await getAllFacts()).filter((fact) => !known_jobs.includes(fact) && !known_facts.includes(fact));
     for (const fact of facts) {
@@ -59,12 +59,11 @@ async function addJob(fact: string, packageData: PackageData) {
 
         const job = await encodeAndSign(data);
 
-        const module = getModule('coda:AddJob');
         const transaction = {
-            moduleID: module.moduleID,
-            assetID: module.assetID,
+            module: "coda",
+            command: "addJob",
             fee: BigInt(10000000),
-            asset: job,
+            params: job,
         };
 
         addToHeap({
@@ -87,12 +86,11 @@ async function addPackage(packageData: PackageData) {
         return;
     }
 
-    const packageModule = getModule('packagedata:AddPackageData');
     const packageTransaction = {
-        moduleID: packageModule.moduleID,
-        assetID: packageModule.assetID,
+        module: "packageData",
+        command: "addPackageData",
         fee: BigInt(1000000),
-        asset: packageData as unknown as Record<string, unknown>,
+        params: packageData as unknown as Record<string, unknown>,
     };
 
     addToHeap({

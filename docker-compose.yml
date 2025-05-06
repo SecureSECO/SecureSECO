@@ -26,11 +26,12 @@ services:
       - internal
     ports:
       - "8000:8000"
-      - "127.0.0.1:8080:8080"
+      - "127.0.0.1:7887:7887"
       - "127.0.0.1:8001:8001"
     volumes:
       - TrustSECO:/root/.lisk
       - TrustSECO:/root/.gnupg
+      - TrustSECO:/trustseco
     environment:
       - HOSTNAME=localhost
       - RESET_ON_VERSION_MISMATCH=1
