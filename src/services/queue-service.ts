@@ -7,7 +7,7 @@ import {
 } from './dlt-service';
 import { encodeAndSign } from './add-job-service'
 import {CodaJob} from '../types'
-import { APIClient } from '@liskhq/lisk-api-client';
+import { APIClient } from '@klayr/api-client';
 import { performance } from 'perf_hooks';
 
 const heap = new Heap<QueueTransaction>(comparator);

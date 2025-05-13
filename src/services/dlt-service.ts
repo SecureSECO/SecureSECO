@@ -1,5 +1,5 @@
-import { apiClient, transactions } from '@liskhq/lisk-client';
-import { APIClient } from '@liskhq/lisk-api-client';
+import { apiClient, transactions } from '@klayr/client';
+import { APIClient } from '@klayr/api-client';
 import fs from 'fs';
 import {
     CodaJob, RandomJobResult, PackageData, Fact
@@ -8,7 +8,7 @@ import axios from 'axios';
 import 'dotenv/config';
 import { getKeys } from '../keys';
 import { addToHeap } from './queue-service';
-import { DecodedTransactionJSON } from '@liskhq/lisk-api-client/dist-node/types';
+import { DecodedTransactionJSON } from '@klayr/api-client/dist-node/types';
 import { performance } from 'perf_hooks';
 
 const DLT_ENDPOINT = 'ws://dlt:7887/rpc-ws';
@@ -276,7 +276,7 @@ export async function runTransaction(transaction: DecodedTransactionJSON<Record<
 export async function getMinFee(transaction) {
     const client = await getClient();
     // eslint-disable-next-line no-param-reassign
-    transaction.fee = BigInt(transactions.convertLSKToBeddows('1'));
+    transaction.fee = BigInt(transactions.convertklyToBeddows('1'));
     const signedTxWithSomeFee = await client.transaction.create(transaction, getPrivateKey());
     return client.transaction.computeMinFee(signedTxWithSomeFee);
 }

@@ -29,9 +29,7 @@ services:
       - "127.0.0.1:7887:7887"
       - "127.0.0.1:8001:8001"
     volumes:
-      - TrustSECO:/root/.lisk
-      - TrustSECO:/root/.gnupg
-      - TrustSECO:/trustseco
+      - TrustSECO:/root/
     environment:
       - HOSTNAME=localhost
       - RESET_ON_VERSION_MISMATCH=1

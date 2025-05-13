@@ -34,8 +34,8 @@
   },
   "dependencies": {
     "@koa/cors": "^3.3.0",
-    "@liskhq/lisk-api-client": "^6.0.2",
-    "@liskhq/lisk-client": "^6.0.2",
+    "@klayr/api-client": "^6.0.2",
+    "@klayr/client": "^6.0.2",
     "axios": "^0.26.1",
     "dotenv": "^16.0.0",
     "heap-js": "^2.2.0",
