@@ -75,7 +75,32 @@ async function consumeFromHeap(client: APIClient) {
         const minFee = await getMinFee(queueTransaction.transaction);
         queueTransaction.transaction.fee = minFee;
         const transaction = await client.transaction.create(queueTransaction.transaction, getPrivateKey());
-        await runTransaction(transaction);
+        try {
+            await runTransaction(transaction);
+        } catch (e: unknown) {
+            let error = (e as Error);
+            // These errors are recoverable by just setting the correct fee/nonce,
+            // so just add them back onto the queue
+            if (error.message.includes("nonce is lower than account nonce")
+                || error.message.includes("Incoming transaction fee is not sufficient to replace existing transaction")
+                || error.message.includes("Bounty is lower than minimum required bounty")) {
+                let newTransaction: QueueTransaction = {
+                    ...queueTransaction,
+                    // Recreate the object without (possibly) incorrect nonce
+                    transaction: {
+                        module: queueTransaction.transaction.module,
+                        command: queueTransaction.transaction.command,
+                        // Fee will be corrected in the next consumeFromHeap() call
+                        fee: queueTransaction.transaction.fee,
+                        params: queueTransaction.transaction.params,
+                    }
+                }
+                addToHeap(newTransaction);
+            } else {
+                console.log('Encountered error while running transaction.');
+                console.error(error, error.stack);
+            }
+        }
     } catch (e) {
         console.log('Encountered error, if you believe this was a mistake, please run task again.');
         console.error(e, e.stack);
