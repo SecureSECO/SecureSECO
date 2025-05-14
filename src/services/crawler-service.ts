@@ -8,9 +8,10 @@ import { PackageData } from '../types';
 export async function runCrawler(
     package_manager: string,
     count: string,
+    from: string
 ): Promise<string[]> {
     const resp = await axios.get(
-        `http://spider:5000/get-most-popular-packages?platform=${package_manager}&count=${count}`,
+        `http://spider:5000/get-most-popular-packages?platform=${package_manager}&count=${count}&from=${from}`,
     );
     const packages: PackageData[] = resp.data.map((p) => ({
         packageName: p.name.toLowerCase(),

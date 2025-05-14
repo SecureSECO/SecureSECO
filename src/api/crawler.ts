@@ -14,10 +14,11 @@ const verification_router: Router = new Router({});
 verification_router.use(linkBlockMiddleware);
 
 verification_router.post('/add-top-packages', async (ctx, next) => {
-    const {
-        platform, count
+    let {
+        platform, count, from
     } = ctx.request.body;
-    const packages = await runCrawler(platform, count);
+    if (from === undefined) from = "0";
+    const packages = await runCrawler(platform, count, from);
     ctx.response.body = packages.reduce((total, val) => `${total} ${val},`, "requested packages: ");
 });
 
