@@ -52,7 +52,8 @@ async function consumeFromHeap(client: APIClient) {
             const next = await nextPackage(packageManagers);
             console.log("NEXT PACKAGE:");
             console.log(next);
-            await addAllJobs(next);
+            if (next !== undefined)
+                await addAllJobs(next);
             currentlyCrawling = false;
         }
         return;
