@@ -23,7 +23,8 @@ export const getClient = async () => {
     return clientCache;
 };
 
-export async function storeGitHubLink(link: string): Promise<Boolean> {
+/** Checks if github gpg link exists and matches with local key */
+export async function checkGitHubLink(link: string): Promise<boolean> {
     let data;
     try {
         data = (await axios.create().get(link)).data;
@@ -35,13 +36,26 @@ export async function storeGitHubLink(link: string): Promise<Boolean> {
     const storedOnGithub = !data.includes("This user hasn't uploaded any GPG keys.");
     if (!storedOnGithub) {
         console.log("User hasn't uploaded GPG keys yet.");
-        return false
+        return false;
     }
     const { publicKey } = await getKeys();
     if (publicKey.replace(/\s/g, "") !== data.replace(/\s/g, "")) {
         console.log("Local gpg key and public gpg key don't match!")
         return false;
     }
+
+    return true;
+}
+
+/** Checks if the gpg key has been stored */
+export async function settingsStored(): Promise<boolean> {
+    const link = await getGitHubLink();
+    const { slingers } = await getAccount();
+    return checkGitHubLink(link) && slingers !== undefined;
+}
+
+export async function storeGitHubLink(link: string): Promise<boolean> {
+    if (!await checkGitHubLink(link)) return false;
 
     const toStore = {
         github_link: link,
@@ -69,7 +83,7 @@ export async function storeGitHubLink(link: string): Promise<Boolean> {
     return true;
 }
 
-export async function getGitHubLink() {
+export async function getGitHubLink(): Promise<string> {
     if (!fs.existsSync('storage.json')) {
         return '';
     }

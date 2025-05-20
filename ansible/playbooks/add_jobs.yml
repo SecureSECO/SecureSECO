@@ -17,7 +17,7 @@
     - name: Call add-top-packages endpoint
       community.docker.docker_compose_v2_exec:
         service: web
-        command: "curl -X POST \"http://localhost:3000/api/crawler/add-top-packages\" -H \"Content-Type: application/json\" --data '{\"count\":{{ amount }},\"platform\":\"{{ platform}}\"}, \"from\":{{ from}}}' -v"
+        command: "curl -X POST \"http://localhost:3000/api/crawler/add-top-packages\" -H \"Content-Type: application/json\" --data '{\"count\":{{ amount }},\"platform\":\"{{ platform}}\", \"from\":{{ from }}}' -v"
         project_src: /datadisk/SecureSECO
       register: result
     - name: print output

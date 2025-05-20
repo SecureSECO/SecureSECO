@@ -3,15 +3,20 @@ import Emitter from 'node:events';
 import { QueueTransaction } from '../types';
 import {
     getAccount,
-    getClient, getMinFee, getPrivateKey, runTransaction, getMinimumBounty
+    getClient, getMinFee, getPrivateKey, runTransaction, getMinimumBounty, settingsStored,
 } from './dlt-service';
+import addAllJobs from './add-job-service';
+import { nextPackage } from './crawler-service';
 import { encodeAndSign } from './add-job-service'
 import {CodaJob} from '../types'
 import { APIClient } from '@klayr/api-client';
 import { performance } from 'perf_hooks';
 
+const packageManagers = ['pypi'];
+const autoCrawl = process.env.ENABLE_AUTO_CRAWLER === 'true';
+let currentlyCrawling = false;
 const heap = new Heap<QueueTransaction>(comparator);
-var current_job: number | null = null;
+let current_job: number | null = null;
 const emitter = new Emitter();
 
 export function addToHeap(transaction: QueueTransaction) {
@@ -42,6 +47,14 @@ export async function startQueue() {
 async function consumeFromHeap(client: APIClient) {
     if (heap.isEmpty()) {
         current_job = null;
+        if (autoCrawl && !currentlyCrawling && await settingsStored()) {
+            currentlyCrawling = true;
+            const next = await nextPackage(packageManagers);
+            console.log("NEXT PACKAGE:");
+            console.log(next);
+            await addAllJobs(next);
+            currentlyCrawling = false;
+        }
         return;
     }
 
