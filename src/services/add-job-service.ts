@@ -79,7 +79,7 @@ async function addJob(fact: string, packageData: PackageData) {
 async function addPackage(packageData: PackageData) {
     const pack = await getPackageData(packageData.packageName);
     // If all versions are already added, there is nothing left to do, so return
-    if (pack !== [] && pack !== undefined &&
+    if (pack !== undefined &&
         packageData.packageReleases.every(
             (release) => (pack as PackageData).packageReleases?.includes(release))
     ) {

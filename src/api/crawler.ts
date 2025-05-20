@@ -18,6 +18,7 @@ verification_router.post('/add-top-packages', async (ctx, next) => {
         platform, count, from
     } = ctx.request.body;
     if (from === undefined) from = 0;
+    platform = platform.toLowerCase();
     from = Number(from);
     count = Number(count);
     const packages = await runCrawler(platform, count, from);
