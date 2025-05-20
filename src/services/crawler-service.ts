@@ -19,12 +19,19 @@ export async function runCrawler(
 }
 
 let mostPopularPackagesCache: Record<string, PackageData[]> = {};
+let packageCacheAge = new Date();
 
 async function getMostPopularPackages(
     packageManager: string,
     count: number,
     from: number,
 ): Promise<PackageData[]> {
+    const now = new Date();
+    // refresh the cache if its older than a week
+    if ((packageCacheAge.getTime() - now.getTime()) / (1000 * 60 * 60 * 24 * 7)) {
+        packageCacheAge = now;
+        mostPopularPackagesCache = {};
+    }
     let cached = mostPopularPackagesCache[packageManager] || [];
     if (from + count <= cached.length) {
         return cached.slice(from, from + count);
