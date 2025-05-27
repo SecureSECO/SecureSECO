@@ -7,7 +7,7 @@ FROM ${SECURESECO_PORTAL_IMAGE} AS portal
 ##################
 # App
 ##################
-FROM node:18
+FROM node:24
 
 # Install docker
 RUN apt-get -y update \
