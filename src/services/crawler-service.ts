@@ -74,6 +74,7 @@ export async function nextPackage(packageManagers: string[]): Promise<PackageDat
             .filter((pack) => pack.packagePlatform === packageManager)
             .map((pack) => pack.packageReleases.length)
             .reduce((x, y) => x + y, 0) / packages.total;
+        console.log(`average version count: ${averageVersionCount}`);
         // Find first package that has a version count lower than the average
         const packag = popularPackages.find((pack) => {
             const existingPackage = packages.packages.find(
@@ -81,14 +82,27 @@ export async function nextPackage(packageManagers: string[]): Promise<PackageDat
                     && pack2.packageOwner === pack.packageOwner
                     && pack2.packagePlatform === pack.packagePlatform,
             );
+            if ((existingPackage === undefined)
+                || ((existingPackage.packageReleases.length < averageVersionCount)
+                    && !existingPackage.packageReleases.includes(pack.packageReleases[0])))
+            {
+                console.log("existing package:");
+                console.log(existingPackage);
+                console.log(pack);
+            }
             return (existingPackage === undefined)
                 || ((existingPackage.packageReleases.length < averageVersionCount)
                     && !existingPackage.packageReleases.includes(pack.packageReleases[0]));
         });
+        console.log("packag:");
+        console.log(packag);
         if (packag === undefined) return popularPackages[0];
         return packag;
     }
-    console.log("Getting first package that doesn't exist yet");
+    console.log("Getting first package that doesn't exist yet, from following list:");
+    console.log(popularPackages)
+    console.log(packages.packages)
+    console.log(maxIndex)
     return popularPackages.find((pack) => {
         const existingPackage = packages.packages.find(
             (pack2) => pack2.packageName === pack.packageName
