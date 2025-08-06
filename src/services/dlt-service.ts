@@ -172,9 +172,8 @@ export async function getTopPackages(descending: boolean, count: number): Promis
     const client = await getClient();
     const packages: { packages: PackageData[] } = await client.invoke('packageData_getAllPackages');
 
-    // For each package get trust score, then sort the packages by score,
-    // and grab the count top ones
-    return (await Promise.all(
+    // For each package get trust score
+    let packagesWithScore = (await Promise.all(
         (packages as { packages: PackageData[] }).packages.map(async (pack) => {
             let score = await getTrustScore(pack.packageName);
             if (typeof score !== 'number') return null;
@@ -185,9 +184,44 @@ export async function getTopPackages(descending: boolean, count: number): Promis
                 packageRelease: pack.packageReleases[0],
                 score: score,
             }
-        }))).filter((pack) => pack !== null)
-        .sort((a, b) => descending ? b.score - a.score : a.score - b.score)
-        .slice(0, count);
+        }))).filter((pack) => pack !== null);
+
+    let compareFn = (a, b) => descending ? b.score - a.score : a.score - b.score;
+    return get_top_elemenents(packagesWithScore, count, compareFn);
+}
+
+/** insert elem into a sorted list */
+function insert_into_sorted_list<Elem>(list: Elem[], elem: Elem, compareFn: (a: Elem, b: Elem) => number) {
+    list.push(elem);
+    let index = list.length - 1;
+    while (index > 0 && compareFn(elem, list[index - 1]) < 0) {
+        [list[index], list[index-1]] = [list[index - 1], list[index]]; // switch elements
+        index--;
+    }
+}
+
+/** Get the count top elements from the list, based on the comparison function */
+function get_top_elemenents<Elem>(list: Elem[], count: number, compareFn: (a: Elem, b: Elem) => number): Elem[] {
+    let result = [];
+    let i = 0;
+    while (i < list.length && result.length < count)
+    {
+        insert_into_sorted_list(result, list[i], compareFn);
+        i++;
+    }
+
+    if (result.length < count)
+        return result;
+
+    for (;i < list.length; i++)
+    {
+        let elem = list[i];
+        if (compareFn(elem, list[count - 1]) < 0) {
+            result.pop()
+            insert_into_sorted_list(result, elem, compareFn);
+        }
+    }
+    return result;
 }
 
 /** Return the version with the highest trust score of a specific package */
