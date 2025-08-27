@@ -12,7 +12,7 @@ import {CodaJob} from '../types'
 import { APIClient } from '@klayr/api-client';
 import { performance } from 'perf_hooks';
 
-const packageManagers = ['pypi'];
+const packageManagers = ['pypi', 'npm'];
 const autoCrawl = process.env.ENABLE_AUTO_CRAWLER === 'true';
 let currentlyCrawling = false;
 const heap = new Heap<QueueTransaction>(comparator);
