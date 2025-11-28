@@ -47,7 +47,12 @@
         dest: /etc/docker/daemon.json
         content: |
           {
-            "data-root": "/datadisk/docker"
+            "data-root": "/datadisk/docker",
+            "log-driver": "json-file",
+            "log-opts": {
+              "max-size": "10m",
+              "max-file": "3"
+            }
           }
         owner: root
         group: root
