@@ -114,7 +114,14 @@ export async function startSpider() {
 
         emitter.emit('info', `Got Spider job for package ${job.package} with fact ${job.fact}`);
 
-        const spiderResult = await runJob(job);
+        let spiderResult; 
+        try {
+            spiderResult = await runJob(job);
+        } catch (e) {
+            emitter.emit('info', `Error requesting data from the spider! ${e} Finding a new job!`);
+            await sleep(5 * 1000);
+            continue;
+        }
 
         if (!(job.jobID in jobCounts))
             jobCounts[job.jobID] = 1
