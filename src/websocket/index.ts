@@ -1,9 +1,17 @@
 import Router from 'koa-router';
+import { measurementEvents } from '../services/measurement-store';
 import { getQueueEmitter, getHeapSize } from '../services/queue-service';
 import { getSpiderEmitter } from '../services/spider-service';
 
 const router: Router = new Router({
     prefix: '/websocket',
+});
+
+router.get('/measurements', ctx => {
+    const socket = (ctx as any).websocket;
+    const changed = (packageName: string) => { if (socket.readyState === 1) socket.send(JSON.stringify({packageName})); };
+    measurementEvents.on('changed', changed);
+    socket.on('close', () => measurementEvents.off('changed', changed));
 });
 
 router.get('/', (ctx, next) => {

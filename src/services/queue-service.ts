@@ -1,4 +1,5 @@
 import Heap from 'heap-js';
+import { setSubmission } from './measurement-store';
 import Emitter from 'node:events';
 import { QueueTransaction } from '../types';
 import {
@@ -91,6 +92,8 @@ async function consumeFromHeap(client: APIClient) {
         const transaction = await client.transaction.create(queueTransaction.transaction, getPrivateKey());
         try {
             await runTransaction(transaction);
+            if (queueTransaction.transaction.module === 'trustfacts')
+                setSubmission(Number((queueTransaction.transaction.params.data as any).jobID), 'submitted', transaction.id);
         } catch (e: unknown) {
             let error = (e as Error);
             // These errors are recoverable by just setting the correct fee/nonce,
@@ -111,11 +114,13 @@ async function consumeFromHeap(client: APIClient) {
                 }
                 addToHeap(newTransaction);
             } else {
+                if (queueTransaction.transaction.module === 'trustfacts') setSubmission(Number((queueTransaction.transaction.params.data as any).jobID), 'failed', undefined, 'Ledger rejected submission.');
                 console.log('Encountered error while running transaction.');
                 console.error(error, error.stack);
             }
         }
     } catch (e) {
+        if (queueTransaction.transaction.module === 'trustfacts') setSubmission(Number((queueTransaction.transaction.params.data as any).jobID), 'failed', undefined, 'Could not prepare ledger submission.');
         console.log('Encountered error, if you believe this was a mistake, please run task again.');
         console.error(e, e.stack);
     }

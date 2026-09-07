@@ -1,0 +1,38 @@
+name: trustseco-v2
+services:
+  web:
+    platform: linux/amd64
+    build:
+      context: .
+      dockerfile: local/web.Dockerfile
+    ports: ["127.0.0.1:3001:3000"]
+    env_file: .env
+    environment:
+      SERVER_TYPE: PRIVATE
+      ENABLE_SPIDER: "true"
+      ENABLE_AUTO_CRAWLER: "false"
+    volumes:
+      - measurements:/usr/app/data
+      - keys:/root/.gnupg
+    depends_on:
+      dlt:
+        condition: service_healthy
+      spider:
+        condition: service_started
+  dlt:
+    platform: linux/amd64
+    build: ./components/ledger
+    volumes:
+      - ledger:/root/.klayr
+      - keys:/root/.gnupg
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('@klayr/api-client').createWSClient('ws://127.0.0.1:7887/rpc-ws').then(async c=>{await c.invoke('system_getNodeInfo');await c.disconnect();process.exit(0)}).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 10s
+      retries: 60
+  spider:
+    build: ./components/spider
+volumes:
+  measurements:
+  keys:
+  ledger:

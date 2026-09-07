@@ -138,3 +138,10 @@ dist
 # Custom
 keys
 storage.json
+
+# Local measurement database
+data/
+# Independently versioned components
+components/
+local/*-collection.json
+local/timing-jobs.json
