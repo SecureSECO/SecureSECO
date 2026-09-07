@@ -101,9 +101,12 @@ remain visible next to observations from earlier jobs. A finalized measurement i
 not proof that the upstream data or collector is correct.
 
 The package page's Confirmed only filter hides all unfinalized measurements.
-Its confirmed score is withheld until all ledger observations for that version
-have finalized; existing leaderboard scores continue to use the ledger's original
-score calculation and are not finality-certified.
+Local and Confirmed scores use the ledger's same read-only scoring formula on
+separate input subsets. The latest observation per fact type and submitting account
+is selected independently within each subset; a pending update cannot remove an
+older finalized input. Only numeric facts recognized by the formula contribute
+to score coverage. Empty scoring subsets return null, not a baseline score.
+Existing leaderboard scores retain the original calculation and are not finality-certified.
 
 Validation: build the web image and run `node --test test/measurements.cjs` with
 the test directory mounted into /usr/app/test. Six tests cover persistence, value

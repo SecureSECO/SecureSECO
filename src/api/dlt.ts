@@ -1,4 +1,5 @@
 import Router from 'koa-router';
+import { scoreInputs } from '../services/score-inputs';
 import { getMeasurements } from '../services/measurement-service';
 import {
     getAccount, getGitHubLink, getJobs, getMetrics, getPackageData, 
@@ -17,6 +18,16 @@ const router: Router = new Router({
 const verification_router: Router = new Router({});
 
 verification_router.use(linkBlockMiddleware);
+
+router.get('/scores/:packageName/:version', async ctx => {
+    const client = await getClient();
+    const snapshot = await getMeasurements(ctx.params.packageName);
+    const localInputs = scoreInputs(snapshot.facts, ctx.params.version);
+    const confirmedInputs = snapshot.ledgerAvailable ? scoreInputs(snapshot.facts, ctx.params.version, true) : [];
+    const local = await client.invoke('trustfacts_calculateScoreForFacts', { facts: localInputs });
+    const confirmed = await client.invoke('trustfacts_calculateScoreForFacts', { facts: confirmedInputs });
+    ctx.body = { local, confirmed, ledgerAvailable: snapshot.ledgerAvailable, updatedAt: new Date().toISOString() };
+});
 
 router.get('/confirmed-score/:packageName/:version', async ctx => {
     const client = await getClient();
