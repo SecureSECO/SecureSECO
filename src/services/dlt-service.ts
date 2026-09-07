@@ -7,6 +7,7 @@ import {
 import axios from 'axios';
 import 'dotenv/config';
 import { getKeys } from '../keys';
+import { primaryFingerprints } from '../gpg-fingerprints';
 import { addToHeap } from './queue-service';
 import { DecodedTransactionJSON } from '@klayr/api-client/dist-node/types';
 import { performance } from 'perf_hooks';
@@ -33,25 +34,23 @@ export async function checkGitHubLink(link: string): Promise<boolean> {
         return false;
     }
 
-    const storedOnGithub = !data.includes("This user hasn't uploaded any GPG keys.");
-    if (!storedOnGithub) {
-        console.log("User hasn't uploaded GPG keys yet.");
-        return false;
-    }
-    const { publicKey } = await getKeys();
-    if (publicKey.replace(/\s/g, "") !== data.replace(/\s/g, "")) {
-        console.log("Local gpg key and public gpg key don't match!")
+    try {
+        const { publicKey } = await getKeys();
+        const [local, remote] = await Promise.all([
+            primaryFingerprints(publicKey), primaryFingerprints(data),
+        ]);
+        return local.length === 1 && remote.includes(local[0]);
+    } catch {
         return false;
     }
 
-    return true;
 }
 
 /** Checks if the gpg key has been stored */
 export async function settingsStored(): Promise<boolean> {
     const link = await getGitHubLink();
     const { slingers } = await getAccount();
-    return checkGitHubLink(link) && slingers !== undefined;
+    return await checkGitHubLink(link) && slingers !== undefined;
 }
 
 export async function storeGitHubLink(link: string): Promise<boolean> {
@@ -64,12 +63,17 @@ export async function storeGitHubLink(link: string): Promise<boolean> {
     console.log("Storing gpg key...")
     await fs.promises.writeFile('storage.json', JSON.stringify(toStore), 'utf8');
 
+    if ((await getAccount()).slingers !== undefined) return true;
+    const { publicKey } = await getKeys();
+    const [fingerprint] = await primaryFingerprints(publicKey);
+
     const transaction = {
         module: "accounts",
         command: "accountAdd",
         fee: BigInt(10000000),
         params: {
             url: link,
+            fingerprint,
         },
     };
 

@@ -1,5 +1,6 @@
 /* eslint-disable no-await-in-loop,no-continue */
 import axios from 'axios';
+import { saveMeasurement, listMeasurements, sourceFor, setSubmission } from './measurement-store';
 import Emitter from 'node:events';
 import {
     RandomJobResult, SpiderJob, Tokens,
@@ -30,6 +31,13 @@ export async function loadSpiderSettings() {
     let gh_username = process.env.GH_USERNAME;
     if (gh_username) {
         await storeGitHubLink(`https://github.com/${gh_username.toLowerCase()}.gpg`)
+    }
+    // Resume durable, signed measurements after a coordinator restart.
+    for (const m of listMeasurements().filter(m => m.signature && ['collected', 'submitted'].includes(m.status))) {
+        addToHeap({name: 'fact', priority: 200, created_at: performance.now(), transaction: {
+            module: 'trustfacts', command: 'addFact', fee: BigInt(100000000),
+            params: {data: {jobID: m.jobID, factData: m.factData}, signature: m.signature},
+        }});
     }
     let spider_enabled = process.env.ENABLE_SPIDER;
     if (spider_enabled && spider_enabled === "true") {
@@ -86,8 +94,22 @@ export async function runJob(job: RandomJobResult): Promise<unknown> {
 }
 
 let running = false;
+let worker: Promise<void> | undefined;
+let activity = 'Collection is paused.';
+emitter.on('info', message => { activity = String(message); });
+export const getCollectionStatus = () => ({ running, activity: running ? activity : 'Collection is paused.' });
 
-export async function startSpider() {
+export function startSpider(): Promise<void> {
+    running = true;
+    if (!worker) {
+        worker = runSpiderLoop().catch(() => {
+            activity = 'Collection stopped after an error. Restart collection to retry.';
+        }).finally(() => { running = false; worker = undefined; });
+    }
+    return worker;
+}
+
+async function runSpiderLoop() {
     running = true;
     let jobCounts = {}; // the amount of times a job has failed
 
@@ -145,9 +167,21 @@ export async function startSpider() {
             factData: JSON.stringify(dataPoint),
         };
 
-        const encoded = await encodeFact(data);
+        const measurement = {fact: job.fact, factData: data.factData, version: job.version,
+            packageName: job.package, jobID: data.jobID, account: {uid: keys.id},
+            status: 'collected' as const, source: sourceFor(job.fact), collectedAt: new Date().toISOString()};
+        saveMeasurement(measurement);
+        let signature: string;
+        try {
+            const encoded = await encodeFact(data);
+            signature = await signMessage(encoded, keys.id);
+        } catch {
+            setSubmission(data.jobID, 'failed', undefined, 'Could not sign the collected measurement.');
+            await sleep(5000);
+            continue;
+        }
 
-        const signature = await signMessage(encoded, keys.id);
+        saveMeasurement({...measurement, signature});
 
         const trustFact = {
             data,

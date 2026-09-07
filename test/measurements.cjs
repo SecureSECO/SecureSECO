@@ -1,0 +1,13 @@
+const {test}=require('node:test');
+const assert=require('node:assert/strict');
+const fs=require('fs');const os=require('os');const path=require('path');
+process.env.MEASUREMENTS_FILE=path.join(fs.mkdtempSync(path.join(os.tmpdir(),'trustseco-test-')),'measurements.json');
+const s=require('../dist/services/measurement-store');
+const fact={fact:'gh_open_issues_count',factData:'12',version:'1',packageName:'example',jobID:1,account:{uid:'abc'}};
+const local={...fact,status:'collected',source:'GitHub',signature:'test',collectedAt:'2026-09-07T00:00:00Z'};
+test('collection persists before ledger submission and survives reload',()=>{s.saveMeasurement(local);assert.equal(JSON.parse(fs.readFileSync(process.env.MEASUREMENTS_FILE))['1:abc'].factData,'12');delete require.cache[require.resolve('../dist/services/measurement-store')];assert.equal(require('../dist/services/measurement-store').listMeasurements()[0].status,'collected');});
+test('inclusion is not finality; metadata is preserved',()=>{const [m]=s.reconcile([local],[fact],20,'block20',10,{});assert.equal(m.status,'recorded');assert.equal(m.collectedAt,local.collectedAt);const [final]=s.reconcile([m],[fact],25,'block25',20,{20:'block20'});assert.equal(final.status,'confirmed');});
+test('reorg never retains a blue check',()=>{const recorded={...local,status:'confirmed',observedHeight:20,observedBlockID:'old'};assert.equal(s.reconcile([recorded],[fact],25,'new',20,{20:'replacement'})[0].status,'recorded');assert.equal(s.reconcile([recorded],[],25,'new',20,{})[0].status,'submitted');});
+test('new value does not inherit old confirmation or collection timestamp',()=>{const old={...local,status:'confirmed',observedHeight:10,observedBlockID:'block10'};const [m]=s.reconcile([old],[{...fact,factData:'13'}],30,'block30',20,{10:'block10'});assert.equal(m.status,'recorded');assert.equal(m.collectedAt,undefined);});
+test('pending measurements remain visible beside older confirmed observations',()=>{const older={...local,jobID:2,status:'confirmed',observedHeight:10,observedBlockID:'block10'};const result=s.reconcile([older,local],[{...fact,jobID:2}],30,'block30',20,{10:'block10'});assert.equal(result.length,2);assert.ok(result.some(m=>m.status==='collected'));assert.ok(result.some(m=>m.status==='confirmed'));});
+test('failed submission retains measured value',()=>{s.setSubmission(1,'failed',undefined,'Rejected');assert.equal(s.listMeasurements()[0].factData,'12');assert.equal(s.listMeasurements()[0].status,'failed');});

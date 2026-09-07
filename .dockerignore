@@ -1,2 +1,8 @@
-node_modules
-npm-debug.log
+**/.git
+**/node_modules
+**/.env
+local/*.log
+
+data
+local/tests
+local/*.json

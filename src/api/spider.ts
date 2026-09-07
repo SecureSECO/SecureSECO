@@ -1,6 +1,6 @@
 import Router from 'koa-router';
 import {
-    getTokens,
+    getCollectionStatus, getTokens,
     isRunning, setTokens, startSpider, stopSpider,
 } from '../services/spider-service';
 import { getGitHubLink } from '../services/dlt-service';
@@ -55,7 +55,10 @@ router.get('/start', async (ctx, next) => {
 router.get('/stop', (ctx, next) => {
     stopSpider();
     ctx.response.status = 200;
+    ctx.response.body = { success: true };
 });
+
+router.get('/activity', async ctx => { ctx.response.body = getCollectionStatus(); });
 
 router.get('/status', async (ctx, next) => {
     ctx.response.body = isRunning();
